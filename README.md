@@ -50,9 +50,10 @@ This script is intended to automate your reconnaissance process in an organized 
 
 
 # Usage
-1. # ./msfrpc.sh
-1. # python3 main goap/actions-it.json ( or goap/actions-ics.json)
+1. ./msfrpc.sh
+2. python3 main goap/actions-it.json ( or goap/actions-ics.json)
 
+Recommended to run as root.
 
 **Acknowledgement:** This code was created for personal use with hosts you able to hack/explore by any of the known bug bounty program. Use it at your own risk.
 
