@@ -1,0 +1,224 @@
+{
+  "arpscan": {
+    "priority": 1,
+    "precond": {
+      "Symbol_GetLanNodes": false,
+      "Symbol_NetworkSegmentCheck": false
+    },
+    "effect": {
+      "Symbol_GetLanNodes": true
+    }
+  },
+  "tcpscan": {
+    "priority": 2,
+    "precond": {
+      "Symbol_GetLanNodes": true,
+      "Symbol_TcpScan": false,
+      "Symbol_IdentOs": false
+    },
+    "effect": {
+      "Symbol_TcpScan": true,
+      "Symbol_IdentOs": true
+    }
+  },
+  "udpscan": {
+    "priority": 3,
+    "precond": {
+      "Symbol_GetLanNodes": true,
+      "Symbol_TcpScan": true,
+      "Symbol_UdpScan": false
+    },
+    "effect": {
+      "Symbol_UdpScan": true
+    }
+  },
+  "exploit_lateral": {
+    "priority": 2,
+    "precond": {
+      "Symbol_TcpScan": true,
+      "Symbol_IdentOs": true
+    },
+    "effect": {
+      "Symbol_LateralMovement": true
+    }
+  },
+  "exploit_bruteforce": {
+    "priority": 3,
+    "precond": {
+      "Symbol_TcpScan": true,
+      "Symbol_IdentOs": true
+    },
+    "effect": {
+      "Symbol_BruteForce": true,
+      "Symbol_LateralMovement": true
+    }
+  },
+  "arp_poisoning": {
+    "priority": 4,
+    "precond": {
+      "Symbol_TcpScan": true,
+      "Symbol_IdentOs": true
+    },
+    "effect": {
+      "Symbol_ArpPoisoning": true
+    }
+  },
+  "get_networkinfo": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true
+    },
+    "effect": {
+      "Symbol_GetNetworkInfo": true
+    }
+  },
+  "get_os_credential": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true
+    },
+    "effect": {
+      "Symbol_GetOsCredential": true
+    }
+  },
+  "priv_escalation": {
+    "priority": 2,
+    "precond": {
+      "Symbol_GetOsCredential": true
+    },
+    "effect": {
+      "Symbol_PrivilegeEscalation": true
+    }
+  },
+  "get_dc_info": {
+    "priority": 2,
+    "precond": {
+      "Symbol_GetNetworkInfo": true
+    },
+    "effect": {
+      "Symbol_DCCheck": true
+    }
+  },
+  "get_logon_user": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true
+    },
+    "effect": {
+      "Symbol_LogonUserInfo": true
+    }
+  },
+  "get_local_user": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true
+    },
+    "effect": {
+      "Symbol_LocalUser": true
+    }
+  },
+  "get_domain_user": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true
+    },
+    "effect": {
+      "Symbol_DomainUser": true
+    }
+  },
+  "use_local_user": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LocalUser": true
+    },
+    "effect": {
+      "Symbol_ValidUser": true
+    }
+  },
+  "use_domain_user": {
+    "priority": 2,
+    "precond": {
+      "Symbol_DomainUser": true
+    },
+    "effect": {
+      "Symbol_ValidUser": true
+    }
+  },
+  "create_user": {
+    "priority": 3,
+    "precond": {
+      "Symbol_LogonUserInfo": true
+    },
+    "effect": {
+      "Symbol_CreateUser": true
+    }
+  },
+  "get_processinfo": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true
+    },
+    "effect": {
+      "Symbol_ProcessInfo": true
+    }
+  },
+  "process_migrate": {
+    "priority": 3,
+    "precond": {
+      "Symbol_LateralMovement": true,
+      "Symbol_ProcessInfo": true
+    },
+    "effect": {
+      "Symbol_ProcessMigrate": true
+    }
+  },
+  "get_maindrvinfo": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true
+    },
+    "effect": {
+      "Symbol_MainDriveInfo": true
+    }
+  },
+  "get_netdrvinfo": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true
+    },
+    "effect": {
+      "Symbol_NetDriveInfo": true
+    }
+  },
+  "get_local_secretinfo": {
+    "priority": 1,
+    "precond": {
+      "GoalSymbol_GetSecretInfo": false,
+      "Symbol_MainDriveInfo": true
+    },
+    "effect": {
+      "GoalSymbol_GetSecretInfo": true
+    }
+  },
+  "get_nw_secretinfo": {
+    "priority": 1,
+    "precond": {
+      "GoalSymbol_GetSecretInfo": false,
+      "Symbol_NetDriveInfo": true
+    },
+    "effect": {
+      "GoalSymbol_GetSecretInfo": true
+    }
+  },
+  "chk_network_segment": {
+    "priority": 2,
+    "precond": {
+      "GoalSymbol_GetSecretInfo": false,
+      "Symbol_NetDriveInfo": true,
+      "Symbol_MainDriveInfo": true
+    },
+    "effect": {
+      "Symbol_NetworkSegmentCheck": true
+    }
+  }
+}

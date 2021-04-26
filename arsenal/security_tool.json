@@ -1,0 +1,20 @@
+{
+  "Panda":["psanhost", "psuaservice", "psuamain"],
+  "Kaspersky":["avp", "avpui", "ksde", "ksdeui", "klpsm"],
+  "Tanium":["tanium","taniumclient","taniumdetectengine","taniumendpointindex","taniumtracecli","taniumtracewebsocketclient64"],
+  "AVG/AVAST":["aswidsagent","aswidsagenta","aswengsrv","avastavwrapper","avgsvc","avgui","avgsvca","avgidsagent","avgsvcx","avgwdsvcx","avgadminclientservice","afwserv","avastui","avastsvc","bccavsvc"],
+  "Symantec":["ccSvcHst","sepWscSvc64"],
+  "WinDefend":["MsMpEng","NisSrv","smartscreen","SecHealthUI","SecurityHealthService","MSASCuiL"],
+  "McAfee":["macmnsvc","macompatsvc","masvc","mcchhost","mcshield","mctray","mfeatp","mfecanary","mfeconsole","mfeensppl","mfeesp","mfefire","mfefw","mfehcs","mfemactl","mfemms","mfetp","mfevtps","mfewc"],
+  "Sophos":["ALSvc","CertificationManagerServiceNT","ManagementAgentNT","MgntSvc","PatchEndpointCommunicator","PatchEndpointOrchestrator","PatchServerCommunicator","SAVAdminService","SAVService","SCFManager","SCFService","SEDService","SLDService","SSPService","SUMService","Sdcservice","SntpService","Sophos.Credential.Store.Service","Sophos.FrontEnd.Service","Sophos.PolicyEvaluation.Service","SophosClean","SophosFS","SophosHealth","SophosLiveQueryService","SophosMTR","SophosSafestore64","Swc_service","Swi_service","Swi_update_64","mcsagent","mcsclient","swi_filter"],
+  "Malwarebytes":["SCComm","mbam","mbamapi","mbamdor","mbamgui","mbamhelper","mbampt","mbamscheduler","mbamservice","mbae","mbae-svc","mbae-cli","mbae64","malwarebytes_assistant","MB3Service","mbarw"],
+  "SentinelOne":[],
+  "TrendMicro":["CNTAoSMgr","DbServer","EndpointBasecamp","HostedAgent","LWCSService","LogServer","NTRtScan","Ntrtscan","OSCEIntegrationService","OfcAoSMgr","OfcCMAgent","OfcLogReceiverSvc","OfcService","PccNTMon","PccNt","TMBMSRV","TMCPMAdapter","TMiACAgentSvc","TmCCSF","TmListen","TmPfw","TmSSClient","TmWSCSvc","dsagent","iCRCService","iVPAgent","ofcDdaSvr","svcGenericHost"],
+  "CarbonBlack":["cavp","cb","RepMgr64","RepWSC64","RepUx","RepUtils32","scanhost"],
+  "CrowdStrike":["csfalconservice","csfalconcontainer"],
+  "FireEye":["xagt","xagtnotif"],
+  "ESET":["ekrn","eguiproxy","egui"],
+  "F-Secure":["fsgk32st","fswebuid","fsgk32","fsma32","fssm32","fnrb32","fsaua","fsorsp","fsav32"],
+  "Cybereason":[],
+  "Cortex":[]
+}
