@@ -1,26 +1,12 @@
-# mushikago
-an automatic penetration testing tool
-
-□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□
-■□□□□□■□□■■■□□■■■□□□■■□■□□□■■■□□■■■□■■■■■■■□□■■■□□■■□□□□□■□□□□□□□□■■□■□□□□■■■□□□□
-■■□□□■■□□□■□□□□■□□□■□□■■□□□□■□□□□■□□□□□■□□□□□□■□□□■□□□□□■□■□□□□□□■□□■■□□□■□□□■□□□
-■□■□■□■□□□■□□□□■□□■□□□□■□□□□■□□□□■□□□□□■□□□□□□■□□□■□□□□□■□■□□□□□■□□□□■□□■□□□□□■□□
-■□■□■□■□□□■□□□□■□□■□□□□□□□□□■□□□□■□□□□□■□□□□□□■□□■□□□□□□■□■□□□□□■□□□□□□□■□□□□□■□□
-■□■□■□■□□□■□□□□■□□■□□□□□□□□□■□□□□■□□□□□■□□□□□□■□□■□□□□□■□□□■□□□■□□□□□□□□■□□□□□■□□
-■□□■□□■□□□■□□□□■□□□■■□□□□□□□■■■■■■□□□□□■□□□□□□■■■□□□□□□■□□□■□□□■□□□□□□□□■□□□□□■□□
-■□□■□□■□□□■□□□□■□□□□□■■□□□□□■□□□□■□□□□□■□□□□□□■□■□□□□□□■□□□■□□□■□□□■■■■□■□□□□□■□□
-■□□■□□■□□□■□□□□■□□□□□□□■□□□□■□□□□■□□□□□■□□□□□□■□□■□□□□□■□□□■□□□■□□□□□■□□■□□□□□■□□
-■□□□□□■□□□■□□□□■□□■□□□□□■□□□■□□□□■□□□□□■□□□□□□■□□■□□□□□■■■■■□□□■□□□□□■□□■□□□□□■□□
-■□□□□□■□□□■□□□□■□□■□□□□□■□□□■□□□□■□□□□□■□□□□□□■□□□■□□□■□□□□□■□□■□□□□□■□□■□□□□□■□□
-■□□□□□■□□□■□□□□■□□■□□□□□■□□□■□□□□■□□□□□■□□□□□□■□□□■□□□■□□□□□■□□□■□□□□■□□■□□□□□■□□
-■□□□□□■□□□■□□□□■□□■■□□□■□□□□■□□□□■□□□□□■□□□□□□■□□□□■□□■□□□□□■□□□■■□□■■□□□■□□□■□□□
-■■□□□■■□□□□■■■■□□□■□■■■□□□□■■■□□■■■□■■■■■■■□□■■■□□□■■□■■□□□■■□□□□□■■□■□□□□■■■□□□□
-□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□
-□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□
-
+ __  __ _   _ ____  _   _ ___ _  __    _    ____  ___  
+|  \/  | | | / ___|| | | |_ _| |/ /   / \  / ___|/ _ \ 
+| |\/| | | | \___ \| |_| || || ' /   / _ \| |  _| | | |
+| |  | | |_| |___) |  _  || || . \  / ___ \ |_| | |_| |
+|_|  |_|\___/|____/|_| |_|___|_|\_\/_/   \_\____|\___/ 
+                                                       
 
 <p align="center">
-<a href="https://twitter.com/TechKeg"><img src="https://img.shields.io/twitter/follow/storenth.svg?logo=twitter"></a>
+<a href="https://twitter.com/TechKeg"><img src="https://img.shields.io/twitter/follow/TechKeg.svg?logo=twitter"></a>
 </p>
 
 Mushikago is an automatic penetration testing tool using game AI, which focuses on the verification of post-exploit among penetration tools. 
@@ -32,11 +18,6 @@ Mushikago is an automatic penetration testing tool using game AI, which focuses 
 - ICS hacking
 - Web GUI
 
-## Workflow
-<h3 align="center">
-  <img src="readme_img/ci-cd-flow.png" alt="lazyrecon-flow" width="700px"></a>
-</h3>
-
 # About
 
 This script is intended to automate your reconnaissance process in an organized fashion by performing the following:
@@ -44,9 +25,6 @@ This script is intended to automate your reconnaissance process in an organized 
 # Installing
 - `Linux` tested
 - 
-
-### Github Actions way
-
 
 
 # Methodology
