@@ -43,17 +43,15 @@ This script is intended to automate your reconnaissance process in an organized 
   - powershell empire 3.x
   - tshark
 
-# python-module
-- python-nmap
-- pymetasploit3
-- mac-vendor-lookup
+- python-module
+  - python-nmap
+  - pymetasploit3
+  - mac-vendor-lookup
 
-# Installing
-- `Linux` tested
-- 
 
-# Methodology
-0. Run `./mushikago.sh`
+# Usage
+1. # ./msfrpc.sh
+1. # python3 main goap/actions-it.json ( or goap/actions-ics.json)
 
 
 **Acknowledgement:** This code was created for personal use with hosts you able to hack/explore by any of the known bug bounty program. Use it at your own risk.
