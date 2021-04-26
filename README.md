@@ -28,8 +28,7 @@ This script is intended to automate your reconnaissance process in an organized 
 
 
 # Methodology
-0. Use [dnsperftest](https://github.com/PowderKegTech/mushikago) to know your best resolvers
-1. Run `./mushikago.sh`
+0. Run `./mushikago.sh`
 
 
 **Acknowledgement:** This code was created for personal use with hosts you able to hack/explore by any of the known bug bounty program. Use it at your own risk.
