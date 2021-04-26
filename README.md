@@ -17,7 +17,6 @@ Mushikago is an automatic penetration testing tool using game AI, which focuses 
 - Post-exploit
 - Device detection
 - ICS hacking
-- Web GUI
 
 # About
 
