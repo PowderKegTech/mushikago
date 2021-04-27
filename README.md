@@ -1,16 +1,16 @@
-#   
-╭━╮╭━┳╮╱╭┳━━━┳╮╱╭┳━━┳╮╭━┳━━━┳━━━┳━━━╮
-┃┃╰╯┃┃┃╱┃┃╭━╮┃┃╱┃┣┫┣┫┃┃╭┫╭━╮┃╭━╮┃╭━╮┃
-┃╭╮╭╮┃┃╱┃┃╰━━┫╰━╯┃┃┃┃╰╯╯┃┃╱┃┃┃╱╰┫┃╱┃┃
-┃┃┃┃┃┃┃╱┃┣━━╮┃╭━╮┃┃┃┃╭╮┃┃╰━╯┃┃╭━┫┃╱┃┃
-┃┃┃┃┃┃╰━╯┃╰━╯┃┃╱┃┣┫┣┫┃┃╰┫╭━╮┃╰┻━┃╰━╯┃
-╰╯╰╯╰┻━━━┻━━━┻╯╱╰┻━━┻╯╰━┻╯╱╰┻━━━┻━━━╯                                               
+# **Mushikago**    ,,     ,,     ,,
+                   oo    _oo_   ,oo,
+                  /==\   /==\   /==\
+                 (/==\) (/==\) (/==\)
+                   \/     \/     \/                          
+
+**Mushikago is an automatic penetration testing tool using game AI, which focuses on the verification of post-exploit among penetration testing tool.**
 
 <p align="center">
 <a href="https://twitter.com/TechKeg"><img src="https://img.shields.io/twitter/follow/TechKeg.svg?logo=twitter"></a>
 </p>
 
-**Mushikago is an automatic penetration testing tool using game AI, which focuses on the verification of post-exploit among penetration testing tool.**
+---
 
 ## Features
 - Full Automatic penetration testing tool
