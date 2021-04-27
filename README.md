@@ -72,7 +72,7 @@
 
 #### step 3. Lanch the dashboard
 ```
-# 
+# npm run dev
 ```
 
 #### step 4. Check of nodes.json
@@ -86,6 +86,11 @@ The information collected by the penetration testing is stored in nodes.json.
 
 
 #### step 5. Check of dashborad
+acccess to next url.
+
+```
+http://localhost:9529/
+```
 
 We can check the penetration test information from the dashboard.
 - Network Overview
