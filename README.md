@@ -10,24 +10,19 @@
 <a href="https://twitter.com/TechKeg"><img src="https://img.shields.io/twitter/follow/TechKeg.svg?logo=twitter"></a>
 </p>
 
-Mushikago is an automatic penetration testing tool using game AI, which focuses on the verification of post-exploit among penetration tools. 
+Mushikago is an automatic penetration testing tool using game AI, which focuses on the verification of post-exploit among penetration testing tools. 
 
-# Features
-- Automatic penetration testing tool
+## Features
+- Full Automatic penetration testing tool
 - Device detection
-- Post-exploitation
-  - User account detection (password & hash)
-  - Lateral Movement
-- ICS hacking
-  - ICS detection
-  - ICS protocol detection
+- IT penetration testing
+- ICS penetration testing
 
-# Abstract
-  Mushikago uses game AI technology to select and execute the most appropriate test content based on the environment in spot. The application of game AI technology to security products is new, and our work has shown that game AI is most suitable for penetration testing, where the content needs to change depending on the environment. In addition, Mushikago can automatically perform penetration testing in mixed environments of IT and OT, and can visualize and report the acquired terminal, account, and network information. The test contents are also displayed in a format consistent with MITRE ATT&CK. This allows the user to perform penetration testing at a certain level without manual intervention. Other than Mushikago, there are no other security tools that utilize game AI or automatic penetration testing tools that support OT environments. By publishing the contents of this work, we hope to contribute to new technologies for penetration testing methods for OT and for protecting ICS.
+## Abstract
+  Mushikago uses game AI technology to select and execute the most appropriate test content based on the environment in spot. The application of game AI technology to security products is new, and our work has shown that game AI is most suitable for penetration testing, where the content needs to change depending on the environment. In addition, Mushikago can automatically perform penetration testing in mixed environments of IT and OT, and can visualize and report the acquired terminal, account, and network information. The test contents are also displayed in a format consistent with MITRE ATT&CK. This allows the user to perform penetration testing at a certain level without manual intervention.
+  This tool is intended to automate your reconnaissance process in an organized fashion by performing the following.
 
-This script is intended to automate your reconnaissance process in an organized fashion by performing the following:
-
-# Operation check environment:
+## Operation check environment:
 - Hardware
   - Machine: Raspberry Pi 4 Model B 4GB/8GB
   - OS: Ubuntu Server 20.04.2 LTS
@@ -49,26 +44,91 @@ This script is intended to automate your reconnaissance process in an organized 
   - mac-vendor-lookup
 
 
-# Usage
-1. ./msfrpc.sh
-2. python3 main goap/actions-it.json ( or goap/actions-ics.json)
+## Usage
+#### step 1. Launch Metasploit API
+```
+# ./msfrpc.sh
+```
+
+#### step 2-(a). Mushikago execution (Target system is IT)
+```
+# python3 main goap/actions-it.json
+```
+
+#### step 2-(b). Mushikago execution (Target system is OT)
+```
+# python3 main goap/actions-ics.json
+```
+
+#### step 3. Lanch the dashboard
+
+
+#### step 4. Check of nodes.json
+
+
+#### step 5. Check of dashborad
+
+
 
 Recommended to run as root.
 
 **Acknowledgement:** This code was created for personal use with hosts you able to hack/explore by any of the known bug bounty program. Use it at your own risk.
 
+# Contents of Penetration testing
+- Collecting device information
+  - OS
+  - NIC vendor
+  - Open TCP/IP port
+- Collecting User account detection
+  - Local user account
+  - Local user account password & hash
+  - Domain user account
+  - Domain user account password & hash
+- Collecting Network information
+  - IP address information assigned to the NIC
+  - Established network
+- Collecting Network drive
+- Capturing Network
+  - Save as pcap file
+- Collecting Secret file 
+  - Pre-designated file (mushikago.txt)
+- Collecting Process list
+- Collecting Security product process
+  - AntiVurus Software
+    - Panda
+    - Kaspersky
+    - Tanium
+    - AVG/AVAST
+    - SEP (Symantec Endpoint Protection)
+    - Windows Defender
+    - McAfee
+    - Sophos
+    - Malwarebytes
+  - EDR (Endpoint Detection & Response)
+    - Carbon Black
+    - CrowdStrike
+    - FireEye
+    - ESET
+    - F-Secure
+- Post-exploitation
+  - Lateral Movement
+    - Exploiting vulnerability
+    - SMB
+    - wmic
+- ICS detection
 
-# Future Works:
+
+## Future Works:
 - Add more exploit module
 - Improved scan function
 - Bypassing security tools
 - Improving the goap algorithm
 - Add more ICS protocols to identify
 
-# Licence:
+## Licence:
 - Apache License 2.0
 
-# Developer:
+## Developer:
 - Powder Keg Technologies
 - https://www.powderkegtech.com/
 - https://twitter.com/TechKeg
