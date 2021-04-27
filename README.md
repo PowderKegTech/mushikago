@@ -1,4 +1,5 @@
-# **Mushikago**   ![mushikago-title](./images/mushikago_title.png)
+# **Mushikago**   
+![mushikago-title](./images/mushikago_title.png)
 ```
   ,,     ,,     ,,
   oo    _oo_   ,oo,
