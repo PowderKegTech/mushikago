@@ -26,7 +26,6 @@ Mushikago is an automatic penetration testing tool using game AI, which focuses 
 - Hardware
   - Machine: Raspberry Pi 4 Model B 4GB/8GB
   - OS: Ubuntu Server 20.04.2 LTS
-
 - Software
   - python3
   - nmap
@@ -37,11 +36,11 @@ Mushikago is an automatic penetration testing tool using game AI, which focuses 
   - masscan
   - powershell empire 3.x
   - tshark
-
-- python-module
+- Python-module
   - python-nmap
   - pymetasploit3
   - mac-vendor-lookup
+- Dashborad
 
 
 ## Usage
@@ -50,20 +49,32 @@ Mushikago is an automatic penetration testing tool using game AI, which focuses 
 # ./msfrpc.sh
 ```
 
+
 #### step 2-(a). Mushikago execution (Target system is IT)
 ```
 # python3 main goap/actions-it.json
 ```
+
+ ![mushikago-start](./images/mushikago_start.gif)  
+
 
 #### step 2-(b). Mushikago execution (Target system is OT)
 ```
 # python3 main goap/actions-ics.json
 ```
 
-#### step 3. Lanch the dashboard
 
+#### step 3. Lanch the dashboard
+```
+# 
+```
 
 #### step 4. Check of nodes.json
+```
+ex) # vim nodes.json
+```
+
+ ![mushikago-nodes](./images/mushikago_nodes.gif)  
 
 
 #### step 5. Check of dashborad
@@ -74,7 +85,7 @@ Recommended to run as root.
 
 **Acknowledgement:** This code was created for personal use with hosts you able to hack/explore by any of the known bug bounty program. Use it at your own risk.
 
-# Contents of Penetration testing
+## Contents of Penetration testing
 - Collecting device information
   - OS
   - NIC vendor
