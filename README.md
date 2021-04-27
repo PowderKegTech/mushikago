@@ -1,4 +1,4 @@
-# **Mushikago**
+# **Mushikago**　(./images/mushikago_nodes.gif) 
 ```
   ,,     ,,     ,,
   oo    _oo_   ,oo,
