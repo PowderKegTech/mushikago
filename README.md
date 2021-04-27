@@ -1,10 +1,13 @@
 #   
-╭━╮╭━┳╮╱╭┳━━━┳╮╱╭┳━━┳╮╭━┳━━━┳━━━┳━━━╮
-┃┃╰╯┃┃┃╱┃┃╭━╮┃┃╱┃┣┫┣┫┃┃╭┫╭━╮┃╭━╮┃╭━╮┃
-┃╭╮╭╮┃┃╱┃┃╰━━┫╰━╯┃┃┃┃╰╯╯┃┃╱┃┃┃╱╰┫┃╱┃┃
-┃┃┃┃┃┃┃╱┃┣━━╮┃╭━╮┃┃┃┃╭╮┃┃╰━╯┃┃╭━┫┃╱┃┃
-┃┃┃┃┃┃╰━╯┃╰━╯┃┃╱┃┣┫┣┫┃┃╰┫╭━╮┃╰┻━┃╰━╯┃
-╰╯╰╯╰┻━━━┻━━━┻╯╱╰┻━━┻╯╰━┻╯╱╰┻━━━┻━━━╯                                               
+ /$$      /$$ /$$   /$$  /$$$$$$  /$$   /$$ /$$$$$$ /$$   /$$  /$$$$$$   /$$$$$$   /$$$$$$ 
+| $$$    /$$$| $$  | $$ /$$__  $$| $$  | $$|_  $$_/| $$  /$$/ /$$__  $$ /$$__  $$ /$$__  $$
+| $$$$  /$$$$| $$  | $$| $$  \__/| $$  | $$  | $$  | $$ /$$/ | $$  \ $$| $$  \__/| $$  \ $$
+| $$ $$/$$ $$| $$  | $$|  $$$$$$ | $$$$$$$$  | $$  | $$$$$/  | $$$$$$$$| $$ /$$$$| $$  | $$
+| $$  $$$| $$| $$  | $$ \____  $$| $$__  $$  | $$  | $$  $$  | $$__  $$| $$|_  $$| $$  | $$
+| $$\  $ | $$| $$  | $$ /$$  \ $$| $$  | $$  | $$  | $$\  $$ | $$  | $$| $$  \ $$| $$  | $$
+| $$ \/  | $$|  $$$$$$/|  $$$$$$/| $$  | $$ /$$$$$$| $$ \  $$| $$  | $$|  $$$$$$/|  $$$$$$/
+|__/     |__/ \______/  \______/ |__/  |__/|______/|__/  \__/|__/  |__/ \______/  \______/
+
 
 <p align="center">
 <a href="https://twitter.com/TechKeg"><img src="https://img.shields.io/twitter/follow/TechKeg.svg?logo=twitter"></a>
@@ -19,8 +22,8 @@ Mushikago is an automatic penetration testing tool using game AI, which focuses 
 - ICS penetration testing
 
 ## Abstract
-  Mushikago uses game AI technology to select and execute the most appropriate test content based on the environment in spot. The application of game AI technology to security products is new, and our work has shown that game AI is most suitable for penetration testing, where the content needs to change depending on the environment. In addition, Mushikago can automatically perform penetration testing in mixed environments of IT and OT, and can visualize and report the acquired terminal, account, and network information. The test contents are also displayed in a format consistent with MITRE ATT&CK. This allows the user to perform penetration testing at a certain level without manual intervention.
-  This tool is intended to automate your reconnaissance process in an organized fashion by performing the following.
+  Mushikago uses game AI technology to select and execute the most appropriate test content based on the environment in spot. The application of game AI technology to security products is new, and our work has shown that game AI is most suitable for penetration testing, where the content needs to change depending on the environment. In addition, Mushikago can automatically perform penetration testing in mixed environments of IT and OT(ICS), and can visualize and report the acquired device, account, and network information. The test contents are also displayed in a format consistent with MITRE ATT&CK. This allows the user to perform penetration testing at a certain level without manual intervention. 
+
 
 ## Operation check environment:
 - Hardware
@@ -40,7 +43,7 @@ Mushikago is an automatic penetration testing tool using game AI, which focuses 
   - python-nmap
   - pymetasploit3
   - mac-vendor-lookup
-- Dashborad
+- WebUI (Dashborad)
 
 
 ## Usage
@@ -76,9 +79,16 @@ ex) # vim nodes.json
 
  ![mushikago-nodes](./images/mushikago_nodes.gif)  
 
+The information collected by the penetration testing is stored in nodes.json.
+
 
 #### step 5. Check of dashborad
 
+We can check the penetration test information from the dashboard.
+- Network Overview
+- Device list
+- acquired data list
+- Penetration testing process tree (Display along MITRE ATT&CK)
 
 
 Recommended to run as root.
@@ -127,13 +137,15 @@ Recommended to run as root.
     - SMB
     - wmic
 - ICS detection
+  - ICS Protocol identify
+  - ICS vendor identify
 
 
 ## Future Works:
 - Add more exploit module
-- Improved scan function
-- Bypassing security tools
 - Improving the goap algorithm
+- Improved scan function
+- Improved dashboard
 - Add more ICS protocols to identify
 
 ## Licence:
