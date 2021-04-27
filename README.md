@@ -1,10 +1,10 @@
-                   ,,     ,,     ,,
-                   oo    _oo_   ,oo,
- # **Mushikago**  /==\   /==\   /==\
-                 (/==\) (/==\) (/==\)
-                   \/     \/     \/
-                  
-
+ # **Mushikago**
+   ,,     ,,     ,,
+   oo    _oo_   ,oo,
+  /==\   /==\   /==\
+ (/==\) (/==\) (/==\)
+   \/     \/     \/
+ 
 **Mushikago is an automatic penetration testing tool using game AI, which focuses on the verification of post-exploit among penetration testing tool.**
 
 <p align="center">
