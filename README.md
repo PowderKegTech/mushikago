@@ -1,4 +1,4 @@
-# **Mushikago**　(./images/mushikago_nodes.gif) 
+# **Mushikago**
 ```
   ,,     ,,     ,,
   oo    _oo_   ,oo,
@@ -6,6 +6,7 @@
 (/==\) (/==\) (/==\)
   \/     \/     \/
 ```
+(./images/mushikago_nodes.gif)
 
 **Mushikago is an automatic penetration testing tool using game AI, which focuses on the verification of post-exploit among penetration testing tool.**
 
