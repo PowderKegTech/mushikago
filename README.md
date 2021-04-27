@@ -96,6 +96,7 @@ We can check the penetration test information from the dashboard.
 - Device list
 - acquired data list
 - Penetration testing process tree (Display along MITRE ATT&CK)
+![mushikago-gui](./images/mushikago_gui.gif)
 
 
 Recommended to run as root.
