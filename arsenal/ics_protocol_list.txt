@@ -4,7 +4,6 @@ hart
 iccp
 cip
 dnp
-dns
 profibus
 ecat
 enip

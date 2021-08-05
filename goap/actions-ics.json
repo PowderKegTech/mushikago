@@ -1,9 +1,20 @@
 {
+  "exploit_lateral": {
+    "priority": 1,
+    "precond": {
+      "Symbol_TcpScan": true,
+      "Symbol_IdentOs": true,
+      "Symbol_LateralMovement": null
+    },
+    "effect": {
+      "Symbol_LateralMovement": true
+    }
+  },
   "arpscan": {
     "priority": 1,
     "precond": {
-      "Symbol_GetLanNodes": false,
-      "Symbol_NetworkSegmentCheck": false
+      "Symbol_GetLanNodes": null,
+      "Symbol_LateralMovement": true
     },
     "effect": {
       "Symbol_GetLanNodes": true
@@ -13,8 +24,8 @@
     "priority": 2,
     "precond": {
       "Symbol_GetLanNodes": true,
-      "Symbol_TcpScan": false,
-      "Symbol_IdentOs": false
+      "Symbol_TcpScan": null,
+      "Symbol_IdentOs": null
     },
     "effect": {
       "Symbol_TcpScan": true,
@@ -26,38 +37,18 @@
     "precond": {
       "Symbol_GetLanNodes": true,
       "Symbol_TcpScan": true,
-      "Symbol_UdpScan": false
+      "Symbol_UdpScan": null
     },
     "effect": {
       "Symbol_UdpScan": true
-    }
-  },
-  "exploit_lateral": {
-    "priority": 2,
-    "precond": {
-      "Symbol_TcpScan": true,
-      "Symbol_IdentOs": true
-    },
-    "effect": {
-      "Symbol_LateralMovement": true
-    }
-  },
-  "exploit_bruteforce": {
-    "priority": 3,
-    "precond": {
-      "Symbol_TcpScan": true,
-      "Symbol_IdentOs": true
-    },
-    "effect": {
-      "Symbol_BruteForce": true,
-      "Symbol_LateralMovement": true
     }
   },
   "arp_poisoning": {
     "priority": 4,
     "precond": {
       "Symbol_TcpScan": true,
-      "Symbol_IdentOs": true
+      "Symbol_IdentOs": true,
+      "Symbol_ArpPoisoning": null
     },
     "effect": {
       "Symbol_ArpPoisoning": true
@@ -66,34 +57,18 @@
   "get_networkinfo": {
     "priority": 2,
     "precond": {
-      "Symbol_LateralMovement": true
+      "Symbol_LateralMovement": true,
+      "Symbol_GetNetworkInfo": null
     },
     "effect": {
       "Symbol_GetNetworkInfo": true
-    }
-  },
-  "get_os_credential": {
-    "priority": 2,
-    "precond": {
-      "Symbol_LateralMovement": true
-    },
-    "effect": {
-      "Symbol_GetOsCredential": true
-    }
-  },
-  "priv_escalation": {
-    "priority": 2,
-    "precond": {
-      "Symbol_GetOsCredential": true
-    },
-    "effect": {
-      "Symbol_PrivilegeEscalation": true
     }
   },
   "get_dc_info": {
-    "priority": 2,
+    "priority": 4,
     "precond": {
-      "Symbol_GetNetworkInfo": true
+      "Symbol_LateralMovement": true,
+      "Symbol_DCCheck": null
     },
     "effect": {
       "Symbol_DCCheck": true
@@ -102,34 +77,39 @@
   "get_logon_user": {
     "priority": 2,
     "precond": {
-      "Symbol_LateralMovement": true
+      "Symbol_LateralMovement": true,
+      "Symbol_LogonUserInfo": null
     },
     "effect": {
       "Symbol_LogonUserInfo": true
     }
   },
-  "get_domain_user": {
-    "priority": 2,
+  "get_local_user": {
+    "priority": 1,
     "precond": {
-      "Symbol_LateralMovement": true
+      "Symbol_LateralMovement": true,
+      "Symbol_LocalUser": null
+    },
+    "effect": {
+      "Symbol_LocalUser": true
+    }
+  },
+  "get_domain_user": {
+    "priority": 1,
+    "precond": {
+      "Symbol_LateralMovement": true,
+      "Symbol_LocalUser": true,
+      "Symbol_DomainUser": null
     },
     "effect": {
       "Symbol_DomainUser": true
     }
   },
-  "get_local_user": {
-    "priority": 2,
-    "precond": {
-      "Symbol_LateralMovement": true
-    },
-    "effect": {
-      "Symbol_LocalUser": true
-    }
-  },
   "use_local_user": {
     "priority": 2,
     "precond": {
-      "Symbol_LocalUser": true
+      "Symbol_LocalUser": true,
+      "Symbol_ValidUser": null
     },
     "effect": {
       "Symbol_ValidUser": true
@@ -138,7 +118,8 @@
   "use_domain_user": {
     "priority": 2,
     "precond": {
-      "Symbol_DomainUser": true
+      "Symbol_DomainUser": true,
+      "Symbol_ValidUser": null
     },
     "effect": {
       "Symbol_ValidUser": true
@@ -147,35 +128,50 @@
   "create_user": {
     "priority": 3,
     "precond": {
-      "Symbol_LogonUserInfo": true
+      "Symbol_LogonUserInfo": true,
+      "Symbol_CreateUser": null
     },
     "effect": {
       "Symbol_CreateUser": true
     }
   },
+  "get_ospatch": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LateralMovement": true,
+      "Symbol_GetOsPatch": null
+    },
+    "effect": {
+      "Symbol_GetOsPatch": true
+    }
+  },
+  "priv_escalation": {
+    "priority": 2,
+    "precond": {
+      "Symbol_LogonUserInfo": true,
+      "Symbol_GetOsPatch": true,
+      "Symbol_PrivilegeEscalation": null
+    },
+    "effect": {
+      "Symbol_PrivilegeEscalation": true
+    }
+  },
   "get_processinfo": {
     "priority": 2,
     "precond": {
-      "Symbol_LateralMovement": true
+      "Symbol_LateralMovement": true,
+      "Symbol_ProcessInfo": null
     },
     "effect": {
       "Symbol_ProcessInfo": true
-    }
-  },
-  "get_av": {
-    "priority": 2,
-    "precond": {
-      "Symbol_ProcessInfo": true
-    },
-    "effect": {
-      "Symbol_GetAntivirusInfo": true
     }
   },
   "process_migrate": {
     "priority": 3,
     "precond": {
       "Symbol_LateralMovement": true,
-      "Symbol_ProcessInfo": true
+      "Symbol_ProcessInfo": true,
+      "Symbol_ProcessMigrate": null
     },
     "effect": {
       "Symbol_ProcessMigrate": true
@@ -184,7 +180,8 @@
   "get_maindrvinfo": {
     "priority": 2,
     "precond": {
-      "Symbol_LateralMovement": true
+      "Symbol_LateralMovement": true,
+      "Symbol_MainDriveInfo": null
     },
     "effect": {
       "Symbol_MainDriveInfo": true
@@ -193,28 +190,18 @@
   "get_netdrvinfo": {
     "priority": 2,
     "precond": {
-      "Symbol_LateralMovement": true
+      "Symbol_LateralMovement": true,
+      "Symbol_NwDriveInfo": null
     },
     "effect": {
-      "Symbol_NetDriveInfo": true
-    }
-  },
-  "chk_network_segment": {
-    "priority": 2,
-    "precond": {
-      "GoalSymbol_GetSecretInfo": false,
-      "Symbol_NetDriveInfo": true,
-      "Symbol_MainDriveInfo": true
-    },
-    "effect": {
-      "Symbol_NetworkSegmentCheck": true
+      "Symbol_NwDriveInfo": true
     }
   },
   "get_packetinfo": {
     "priority": 2,
     "precond": {
       "Symbol_LateralMovement": true,
-      "Symbol_PacketInfo": false
+      "Symbol_PacketInfo": null
     },
     "effect": {
       "Symbol_PacketInfo": true
@@ -223,27 +210,29 @@
   "detect_ics_protocol": {
     "priority": 1,
     "precond": {
-      "Symbol_PacketInfo": true
+      "Symbol_PacketInfo": true,
+      "Symbol_GetIcsProtocol": null
     },
     "effect": {
       "Symbol_GetIcsProtocol": true
     }
   },
-  "detect_ics": {
+  "detect_ics_device": {
     "priority": 1,
     "precond": {
-      "Symbol_GetIcsProtocol": true
+      "Symbol_GetIcsProtocol": true,
+      "Symbol_GetIcsDevice": null
     },
     "effect": {
-      "Symbol_GetIcs": true
+      "Symbol_GetIcsDevice": true
     }
   },
   "attack_ics": {
     "priority": 1,
     "precond": {
       "Symbol_GetIcsProtocol": true,
-      "Symbol_GetIcs": true,
-      "GoalSymbol_AttackIcs": false
+      "Symbol_GetIcsDevice": true,
+      "GoalSymbol_AttackIcs": null
     },
     "effect": {
       "GoalSymbol_AttackIcs": true

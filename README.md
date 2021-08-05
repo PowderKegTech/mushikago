@@ -33,9 +33,10 @@
   - python3
   - nmap
   - metasploit
+  - SearchExploit
   - arp-scan
   - arp-scan-windows (https://github.com/QbsuranAlang/arp-scan-windows-)
-  - wes.py
+  - wes.py (https://github.com/bitsadmin/wesng)
   - masscan
   - powershell empire 3.x
   - tshark
@@ -43,6 +44,7 @@
   - python-nmap
   - pymetasploit3
   - mac-vendor-lookup
+  - mechanicalsoup
 - WebUI (Dashborad)
   - node.js
   - Vue.js
@@ -113,6 +115,7 @@ Recommended to run as root.
   - Local user account password & hash
   - Domain user account
   - Domain user account password & hash
+- Collecting OS patch & Vulnerabilities
 - Collecting Network information
   - IP address information assigned to the NIC
   - Established network
