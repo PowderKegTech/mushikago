@@ -67,7 +67,7 @@ You have to operate root user.
 #### step 2. Access dashborad
 acccess to next url.
 
-http://<ipaddress>:9529/
+http://[ipaddress]:9529/
 
 
 #### step 3-(a). Mushikago execution (Target system is IT)
