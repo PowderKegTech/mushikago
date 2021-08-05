@@ -7,8 +7,8 @@ var options = {
     mode: 'text',
     pythonPath: '/usr/bin/python3',
     pythonOptions: ['-u'], 
-    scriptPath: '../../',
-    args: ['../../goap/actions-ics.json']
+    scriptPath: '../',
+    args: ['../goap/actions-ics.json']
 };
 
 

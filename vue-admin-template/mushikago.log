@@ -1,0 +1,5 @@
+2021-08-05 16:54:03,659     INFO action plan = ['arpscan', 'tcpscan']
+2021-08-05 16:54:03,660     INFO execute arpscan...
+2021-08-05 16:56:16,417     INFO arpscan result = 
+
+2021-08-05 16:56:16,418     INFO No devices in this LAN

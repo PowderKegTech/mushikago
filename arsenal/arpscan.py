@@ -30,6 +30,10 @@ class ArpScan():
     iplist = re.split('\t|\n', res)
     iplist.pop(-1) # 最後に出力される改行をリストから削除
     #print(iplist)
+    if len(iplist) == 0:
+        print("No devices in this LAN")
+        self.mlogger.writelog("No devices in this LAN", "info")
+        exit(0)
 
     # 取得した情報を json 形式に変換し、登録
     # nodes の作成

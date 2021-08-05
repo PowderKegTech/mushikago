@@ -50,50 +50,36 @@
   - Vue.js
   - d3.js
 
+
+## How to install
+coming soon.
+
+
 ## Usage
-#### step 1. Launch Metasploit API
+#### step 1. Launch start script
+You have to operate root user.
 ```
-# ./msfrpc.sh
-```
-
-
-#### step 2-(a). Mushikago execution (Target system is IT)
-```
-# python3 main goap/actions-it.json
+# sudo su
+# cd vue-admin-template
+# ./mushikago.sh
 ```
 
- ![mushikago-start](./images/mushikago_start.gif)  
-
-
-#### step 2-(b). Mushikago execution (Target system is OT)
-```
-# python3 main goap/actions-ics.json
-```
-
-
-#### step 3. Lanch the dashboard
-```
-# npm run dev
-```
-
-#### step 4. Check of nodes.json
-```
-ex) # vim nodes.json
-```
-
- ![mushikago-nodes](./images/mushikago_nodes.gif)  
-
-The information collected by the penetration testing is stored in nodes.json.
-
-
-#### step 5. Check of dashborad
+#### step 2. Access dashborad
 acccess to next url.
 
-```
-http://localhost:9529/
-```
+http://<ipaddress>:9529/
 
-We can check the penetration test information from the dashboard.
+
+#### step 3-(a). Mushikago execution (Target system is IT)
+click to "Start IT Pentesting"
+
+
+#### step 3-(b). Mushikago execution (Target system is OT)
+click to "Start OT Pentesting"
+
+
+#### step 4. Check of dashboard
+We can check the penetration testing information from the dashboard.
 - Network Overview
 - Device list
 - acquired data list
@@ -101,7 +87,12 @@ We can check the penetration test information from the dashboard.
 ![mushikago-gui](./images/mushikago_gui.gif)
 
 
-Recommended to run as root.
+#### step 5. Check of log file
+ex) # vim vue-admin-template/mushikago.log
+```
+ ![mushikago-nodes](./images/mushikago_nodes.gif)  
+
+The information collected by the penetration testing is stored in nodes.json.
 
 **Acknowledgement:** This code was created for personal use with hosts you able to hack/explore by any of the known bug bounty program. Use it at your own risk.
 
@@ -164,7 +155,7 @@ Recommended to run as root.
 
 ## Developer:
 - Powder Keg Technologies
-- https://www.powderkegtech.com/
+- https://powderkegtech.com/
 - https://twitter.com/TechKeg
 - https://www.youtube.com/channel/UCcBHUaYYkqyW8fjbIjiY1ug
 
