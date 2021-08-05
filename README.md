@@ -89,10 +89,8 @@ We can check the penetration testing information from the dashboard.
 
 #### step 5. Check of log file
 ex) # vim vue-admin-template/mushikago.log
-```
- ![mushikago-nodes](./images/mushikago_nodes.gif)  
 
-The information collected by the penetration testing is stored in nodes.json.
+The results of penetration testing will be written to "mushikago.log".
 
 **Acknowledgement:** This code was created for personal use with hosts you able to hack/explore by any of the known bug bounty program. Use it at your own risk.
 
